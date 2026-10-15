@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 
 def build(destination: Path | None = None) -> Path:
@@ -16,7 +16,7 @@ def build(destination: Path | None = None) -> Path:
     with tempfile.TemporaryDirectory(prefix="studywaypoint-deb-") as temp:
         staging = Path(temp) / "package"
         app = staging / "usr" / "share" / "studywaypoint"
-        for relative in ["desktop.py", "server.py", "tracker.py", "plan_library.py", "static", "examples", "assets", "README.md", "USER_GUIDE.md", "CHANGELOG.md"]:
+        for relative in ["desktop.py", "server.py", "tracker.py", "plan_library.py", "ai_planner.py", "static", "examples", "assets", "README.md", "USER_GUIDE.md", "CHANGELOG.md", "log.md"]:
             source = ROOT / relative
             target = app / relative
             target.parent.mkdir(parents=True, exist_ok=True)

@@ -33,12 +33,13 @@ async function refresh() {
   else if(state.view==='day') {state.day=null;state.view='calendar';}
   render();
 }
-function setView(view) { state.view=view; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function setView(view) { state.view=view; render(); if(view==='ai') aiRefresh().catch(e=>flash(e.message,true)); window.scrollTo({top:0,behavior:'smooth'}); }
 async function openDay(id) { state.day=await api(`/api/days/${id}`); state.week=state.day.week; state.view='day'; render(); window.scrollTo({top:0,behavior:'smooth'}); }
-function nav() { ['today','calendar','settings'].forEach(x => document.getElementById(`nav-${x}`).classList.toggle('active',state.view===x)); }
+function nav() { ['today','calendar','ai','settings'].forEach(x => document.getElementById(`nav-${x}`).classList.toggle('active',state.view===x)); }
 function render() {
   nav();
-  if (state.view==='settings') app.innerHTML=settingsView();
+  if (state.view==='ai') app.innerHTML=aiView();
+  else if (state.view==='settings') app.innerHTML=settingsView();
   else if (state.view==='calendar') app.innerHTML=calendarView();
   else if (state.view==='day' && state.day) app.innerHTML=dayView(state.day);
   else app.innerHTML=todayView();
@@ -112,6 +113,7 @@ document.addEventListener('click', async event => {
   if(node.dataset.week) { state.week=Number(node.dataset.week); setView('calendar'); return; }
   if(node.dataset.plan) return mutate(()=>api('/api/plans/select','POST',{plan_id:node.dataset.plan}),'已切换计划');
   const action=node.dataset.action, day=state.day;
+  if(action?.startsWith('ai-')) return aiAction(action);
   if(action==='start-timer') return mutate(async()=>{ state.active=await api('/api/sessions/start','POST',{day_id:day.id}); },'计时已开始');
   if(action==='stop-timer') return mutate(async()=>{ await api('/api/sessions/stop','POST'); state.active=null; },'计时已结束');
   if(action==='apply-plan' && state.importData) return mutate(async()=>{await api('/api/plans/import/apply','POST',state.importData);state.importData=null;},'计划已导入并切换');
@@ -127,6 +129,7 @@ document.addEventListener('change', async event => {
 });
 document.addEventListener('submit', async event => {
   const form=event.target; if(!form.id && !form.classList.contains('acceptance-form')) return; event.preventDefault();
+  if(form.id?.startsWith('ai-')) return aiSubmit(form);
   const d=state.day, v=formValues(form);
   if(form.id==='setup-form') return mutate(()=>api('/api/settings','PATCH',{start_date:document.getElementById('setup-start').value,timezone:document.getElementById('setup-zone').value}),'起始日期已保存');
   if(form.id==='settings-form') return mutate(()=>api('/api/settings','PATCH',v),'设置已保存');

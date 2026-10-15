@@ -1,14 +1,14 @@
-# StudyWaypoint 1.0 使用指南
+# StudyWaypoint 1.1 使用指南
 
 ## 1. 适用范围与下载
 
-本版是适用于 Ubuntu/Debian 图形桌面的独立窗口程序。发行文件包括 `studywaypoint_1.0.0_all.deb`（安装包）、`StudyWaypoint-1.0.0-source.zip`（源码及示例）、`SHA256SUMS`（校验值）。安装包仍需系统提供 Python 3.11+、GTK 3、WebKitGTK 4.1；`apt` 会处理软件包依赖。程序运行和本地数据记录不依赖云服务；打开课程网站时需要联网。没有 Windows/macOS 安装包。
+本版是适用于 Ubuntu/Debian 图形桌面的独立窗口程序。发行文件包括 `studywaypoint_1.1.0_all.deb`（安装包）、`StudyWaypoint-1.1.0-source.zip`（源码及示例）、`SHA256SUMS`（校验值）。安装包仍需系统提供 Python 3.11+、GTK 3、WebKitGTK 4.1；`apt` 会处理软件包依赖。课程与学习记录保存在本机；打开课程网站、使用 AI 对话和联网检索时需要网络。没有 Windows/macOS 安装包。
 
 在发行文件目录中执行：
 
 ```bash
 sha256sum -c SHA256SUMS
-sudo apt install ./studywaypoint_1.0.0_all.deb
+sudo apt install ./studywaypoint_1.1.0_all.deb
 ```
 
 若没有管理员权限，且上述系统依赖已经存在，可解压源码包后执行：
@@ -31,6 +31,20 @@ python3 packaging/install_user.py
 6. 可以填写任务状态、笔记、每日复盘、调整理论/实践/验收的分钟预算。调整预算会记录历史。
 
 本应用只管理学习过程。证据中的文件路径是文本引用，不会自动读取、执行或修改学习实验代码；核心实验需要学习者自行完成。
+
+## 2A. 使用 AI 讨论并生成计划
+
+1. 打开“AI 规划”，配置自己订阅的 OpenAI 兼容 API 的 HTTPS 基础地址、API Key 和模型名称。程序向基础地址追加 `/chat/completions`；`https://api.deepseek.com` 和 `deepseek-v4-pro` 只是默认示例，可改为其他兼容服务提供的地址与模型。推理强度默认“高”，服务商不支持 `reasoning_effort` 参数时选“服务商默认”。密钥保存在本机数据目录的 `ai_config.json`，不会返回到浏览器，也不会进入课程备份。
+2. 在对话框中说明学习目标、当前基础、每天或每周可投入时间、想完成的作品和验收方式。可以多轮讨论和修改。对话记录存在本机 `ai_conversation.json`。
+3. 若要让 AI 基于联网资料提出路线，选择 Brave Search 或 SearXNG 作为检索来源，按下文配置后点击“联网检索并提出路线”。界面会列出搜索来源，供你核对。仅有模型 API Key 时，对话功能可用，但联网检索按钮不可用。
+4. 达成共识后，填写计划名称、`plan_id`、周数与七天每日小时数，点击“生成 v3 JSON 草稿”。后台逐周生成，完成后由程序补齐编号和时间预算，并运行同一套计划校验规则。生成失败时会显示原因，不会修改计划库。
+5. 下载 JSON 检查内容与网址，查看导入差异预览，再点击“确认导入并启用”。此后可直接在“课程日历”使用。相同 `plan_id` 会更新原计划并保留进度；不同 ID 会建立独立进度。
+
+**使用 Brave Search：**访问 [Brave Search API 控制台](https://api-dashboard.search.brave.com/)，开通 Search 计划，在 API Keys 中创建并复制 Key。在应用里选“Brave Search”，将其填入“Brave Search API Key”并保存。发送学习目标后再点联网检索。该密钥与模型 API Key 独立；Brave 按 `X-Subscription-Token` 认证，额度及费用以控制台为准。[Brave 官方步骤](https://api-dashboard.search.brave.com/documentation/quickstart)
+
+**不用 Brave Key：**按 [SearXNG 官方容器安装指南](https://docs.searxng.org/admin/installation-docker)运行自己的实例，在 `settings.yml` 的 `search.formats` 中加入 `json`（保留 `html`）。通过 `curl 'http://127.0.0.1:8888/search?q=python&format=json'` 确认返回含 `results` 的 JSON。然后在应用里选“SearXNG”，填写实例根地址 `http://127.0.0.1:8888` 并保存；根据实际端口修改地址。远程实例需使用 HTTPS。公共实例可能禁用 JSON，返回 403 时应检查实例设置。[SearXNG 搜索接口](https://docs.searxng.org/dev/search_api.html)
+
+模型服务商及所选检索来源的调用可能消耗你的配额或资源。对话内容发送给模型服务商，检索词发送给所选检索来源；SearXNG 还会向其配置的上游搜索服务发起查询。密钥、本机对话和草稿与课程备份分开保存，可在界面中清除；导入前请核对 AI 生成的资源与验收标准。AI 不会替你完成实验。
 
 ## 3. 导入自己的 v3 JSON 计划
 

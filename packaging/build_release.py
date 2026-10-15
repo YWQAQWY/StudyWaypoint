@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import sys
 import zipfile
 from pathlib import Path
 
 from build_deb import ROOT, VERSION, build
 
-OUTPUT = ROOT.parent
+OUTPUT = Path(os.getenv('STUDYWAYPOINT_OUTPUT_DIR', ROOT.parent))
 FILES = [
-    '.gitignore', 'README.md', 'USER_GUIDE.md', 'CHANGELOG.md',
+    '.gitignore', 'AGENTS.md', 'README.md', 'USER_GUIDE.md', 'CHANGELOG.md', 'log.md',
     f'RELEASE_NOTES_{VERSION}.md', 'desktop.py', 'server.py', 'tracker.py',
-    'plan_library.py', 'run.sh', 'run-desktop.sh',
+    'plan_library.py', 'ai_planner.py', 'run.sh', 'run-desktop.sh',
 ]
 FOLDERS = ['assets', 'examples', 'packaging', 'static', 'tests']
 
@@ -23,12 +24,13 @@ def source_files():
     for folder in FOLDERS:
         result.extend(path for path in (ROOT / folder).rglob('*') if path.is_file()
                       and '__pycache__' not in path.parts and path.suffix != '.pyc')
-    result.append(ROOT / 'docs' / 'release_1.0.0.md')
+    result.extend((ROOT / 'docs').glob('release_*.md'))
     return sorted(result)
 
 
 def main():
-    deb = build()
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    deb = build(OUTPUT / f'studywaypoint_{VERSION}_all.deb')
     archive = OUTPUT / f'StudyWaypoint-{VERSION}-source.zip'
     with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as output:
         for path in source_files():

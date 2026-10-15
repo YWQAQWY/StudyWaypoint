@@ -12,10 +12,12 @@ from urllib.parse import unquote, urlsplit
 
 from tracker import ROOT, TrackerError
 from plan_library import PlanLibrary
+from ai_planner import AIPlanner
 
 
 class Handler(BaseHTTPRequestHandler):
     tracker: PlanLibrary
+    ai: AIPlanner
 
     def _send(self, status, data, content_type="application/json; charset=utf-8"):
         body = json.dumps(data, ensure_ascii=False).encode() if content_type.startswith("application/json") else data
@@ -42,12 +44,14 @@ class Handler(BaseHTTPRequestHandler):
     def _handle(self, method):
         path = urlsplit(self.path).path
         try:
+            if path.startswith("/api/ai/"):
+                self._require_ai_local()
             if not path.startswith("/api/"):
                 if method != "GET":
                     raise TrackerError("不支持的方法", "method_not_allowed", 405)
                 if path == "/":
                     path = "/index.html"
-                if path not in ("/index.html", "/style.css", "/app.js"):
+                if path not in ("/index.html", "/style.css", "/app.js", "/ai.js"):
                     raise TrackerError("未找到页面", "not_found", 404)
                 file = ROOT / "static" / path.lstrip("/")
                 self._send(200, file.read_bytes(), mimetypes.guess_type(file)[0] or "text/plain")
@@ -66,9 +70,44 @@ class Handler(BaseHTTPRequestHandler):
         import traceback
         traceback.print_exc()
 
+    def _require_ai_local(self):
+        """Keep credentials and paid AI calls bound to this local app origin."""
+        host = urlsplit("http://" + self.headers.get("Host", ""))
+        local_names = {"127.0.0.1", "localhost"}
+        if host.hostname not in local_names or host.port != self.server.server_port:
+            raise TrackerError("AI 功能只允许从本机访问", "forbidden_origin", 403)
+        origin = self.headers.get("Origin")
+        if origin:
+            source = urlsplit(origin)
+            if (source.scheme != "http" or source.hostname != host.hostname
+                    or source.port != host.port):
+                raise TrackerError("请求来源不匹配", "forbidden_origin", 403)
+
     def _dispatch(self, method, path):
+        if path.startswith("/api/ai/"):
+            return self._dispatch_ai(method, path)
         with self.tracker._lock:
             return self._dispatch_unlocked(method, path)
+
+    def _dispatch_ai(self, method, path):
+        ai = self.ai
+        if method == "GET":
+            if path == "/api/ai/state": return ai.state()
+            if path == "/api/ai/draft": return ai.draft()
+        if method == "POST":
+            if path == "/api/ai/config": return ai.save_config(self._json())
+            if path == "/api/ai/chat": return ai.chat(self._json())
+            if path == "/api/ai/research": return ai.research()
+            if path == "/api/ai/clear": return ai.clear_history()
+            if path == "/api/ai/generate": return ai.start_generation(self._json())
+            if path == "/api/ai/draft/apply":
+                draft_id = self._json().get("id")
+                with self.tracker._lock:
+                    draft = ai.draft()
+                    if draft_id != draft["id"]:
+                        raise TrackerError("草稿已变更，请重新预览", "stale_draft", 409)
+                    return self.tracker.apply_plan(draft["plan"])
+        raise TrackerError("未找到 AI API 或不支持的方法", "not_found", 404)
 
     def _dispatch_unlocked(self, method, path):
         t = self.tracker
@@ -125,6 +164,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def run(host="127.0.0.1", port=8765, data_dir=None):
     Handler.tracker = PlanLibrary(data_dir=data_dir)
+    Handler.ai = AIPlanner(Handler.tracker.data_dir)
     server = ThreadingHTTPServer((host, port), Handler)
     print(f"StudyWaypoint: http://{host}:{server.server_port}", flush=True)
     try:

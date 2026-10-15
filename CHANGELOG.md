@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- 新增使用 OpenAI 兼容 Chat Completions API 的 AI 学习规划界面，可配置 HTTPS 基础地址、模型与个人 API Key；DeepSeek 是默认示例。
+- 可选择 Brave Search API Key 或自备 SearXNG 实例联网检索，基于网页搜索来源与模型推理讨论学习路线。
+- 按周生成可导入的 v3 JSON 草稿，自动校验、预览差异，用户确认后导入。
+- 对话、草稿和密钥保存在本机独立文件，不进入学习计划备份或公开发行包。
+
 ## 1.0.0
 
 - 发布适用于 Ubuntu/Debian 的本地 GTK 桌面程序；公开版仅内置通用一周示例。

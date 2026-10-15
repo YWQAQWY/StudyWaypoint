@@ -19,6 +19,7 @@ from gi.repository import Gio, Gtk, WebKit2  # noqa: E402
 from server import Handler
 from tracker import ROOT, TrackerError
 from plan_library import PlanLibrary
+from ai_planner import AIPlanner
 
 
 APP_ID = "io.github.studywaypoint.App"
@@ -242,6 +243,7 @@ def main() -> int:
         print("无法打开图形桌面，请在有 GTK 显示环境的会话中启动。", file=sys.stderr)
         return 1
     Handler.tracker = PlanLibrary(data_dir=user_data_dir())
+    Handler.ai = AIPlanner(Handler.tracker.data_dir)
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

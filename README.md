@@ -1,6 +1,6 @@
 # StudyWaypoint
 
-StudyWaypoint 是适用于 Ubuntu/Debian 图形桌面的本地学习计划与进度追踪器。它把课程安排成日历和每日任务，记录学习计时、阅读与练习步骤、证据、验收结果及复盘。你可以导入符合 v3 格式的 JSON 计划，多个计划的进度分别保存在本机。
+StudyWaypoint 是适用于 Ubuntu/Debian 图形桌面的学习计划与进度追踪器。它把课程安排成日历和每日任务，记录学习计时、阅读与练习步骤、证据、验收结果及复盘。你可以导入符合 v3 格式的 JSON 计划，多个计划的进度分别保存在本机；也可以配置自己的 API，在应用中与 AI 讨论并生成计划草稿。
 
 公开发行版只内置**通用一周示例计划**，不包含开发者或任何用户的私人课程、学习记录和数据库。应用不会替你完成实验，也不会执行证据中填写的代码或文件路径。
 
@@ -11,6 +11,7 @@ StudyWaypoint 是适用于 Ubuntu/Debian 图形桌面的本地学习计划与进
 - **时间记录**：开始、暂停学习计时，或补录线下学习分钟；按理论、实践、验收分配每日时间预算。
 - **证据与验收**：登记产物路径、链接、提交 hash、测试日志等证据，关联到验收项并人工判定结果。
 - **计划库与备份**：预览、导入、更新、切换计划；分别导出和恢复每个计划的数据。
+- **AI 规划**：使用 OpenAI 兼容的 Chat Completions API 讨论学习目标；选择 Brave Search 或 SearXNG 联网检索资料，再生成可预览的 v3 计划草稿。
 
 ## 安装与启动
 
@@ -22,10 +23,10 @@ StudyWaypoint 是适用于 Ubuntu/Debian 图形桌面的本地学习计划与进
 
 ### 安装发行版
 
-下载 `studywaypoint_1.0.0_all.deb`，在该文件所在目录运行：
+下载 `studywaypoint_1.1.0_all.deb`，在该文件所在目录运行：
 
 ```bash
-sudo apt install ./studywaypoint_1.0.0_all.deb
+sudo apt install ./studywaypoint_1.1.0_all.deb
 ```
 
 安装后从应用菜单搜索 **StudyWaypoint**，或在终端运行 `studywaypoint`。如果同时下载了 `SHA256SUMS`，可先在发行文件目录执行 `sha256sum -c SHA256SUMS` 核对下载文件。
@@ -57,6 +58,38 @@ python3 packaging/install_user.py
 6. 需要时更新任务状态、笔记、每日复盘和时间预算。时间预算的修改会留下历史记录。
 
 证据是**文字引用记录**，不是上传文件本体。填写文件路径不会把该文件复制到应用，也不会运行、检查或修改实验代码。
+
+## AI 规划：从对话生成计划
+
+1. 打开“AI 规划”，填写自己订阅的 **OpenAI 兼容 API** 的 HTTPS 基础地址、API Key 和模型名称，保存后启用对话。应用向基础地址追加 `/chat/completions`。`https://api.deepseek.com` 与 `deepseek-v4-pro` 只是默认示例；使用其他兼容服务时改成该服务提供的基础地址（如末尾带 `/v1`）和模型名。推理强度默认“高”；若服务商不接受 `reasoning_effort` 参数，改选“服务商默认”。
+2. 告诉 AI 你的基础、目标、可投入时长、希望完成的项目与验收方式。继续对话，直到学习路线和范围基本明确。
+3. 如需**联网检索**，在“联网检索来源”中选择 Brave Search 或 SearXNG，按下方步骤配置，再点击“联网检索并提出路线”。应用会产生搜索词、获取网页标题与摘要，并把来源链接和分析结果显示在对话界面。仅配置模型 API Key 时可以对话，但不能执行此步。
+4. 敲定计划名称、稳定的英文 `plan_id`、周数及一周七天的每日小时数，点击“生成 v3 JSON 草稿”。应用在后台逐周生成任务，补齐日 ID、时间预算等固定结构，最终运行现有课程校验器。生成时间取决于周数和 API 响应；界面会显示进度。
+5. 下载草稿 JSON，核对阅读链接、每日任务、交付物和验收条件。预览会列出新增、变更、未变与移除的学习日。确认后点“确认导入并启用”，计划才写入计划库，可立即从日历开始使用。
+
+### Brave Search：申请并填写 Key
+
+1. 在 [Brave Search API 控制台](https://api-dashboard.search.brave.com/) 注册或登录，按控制台提示开通 Search 计划并创建 API Key。该 Key 属于搜索服务，和模型 API Key 不同；以控制台显示的额度和费用为准。
+2. 在应用“AI 规划”中选择 **Brave Search**，把 Key 填入“Brave Search API Key”，点击“保存配置”。已有 Key 时留空会保留原值。
+3. 先发送学习目标，再点“联网检索并提出路线”。应用把搜索词发给 Brave，按来源列表展示网页标题、摘要与链接。Brave 请求通过 `X-Subscription-Token` 认证。[Brave 官方快速入门](https://api-dashboard.search.brave.com/documentation/quickstart)
+
+### SearXNG：不用 Brave Key
+
+1. 按 [SearXNG 官方容器安装指南](https://docs.searxng.org/admin/installation-docker)运行自己的实例，或使用你信任的现有实例。在实例的 `settings.yml` 中启用 JSON 输出：
+
+   ```yaml
+   search:
+     formats:
+       - html
+       - json
+   ```
+
+2. 用 `curl 'http://127.0.0.1:8888/search?q=python&format=json'` 确认返回含 `results` 的 JSON。端口按你的实例实际端口修改；若返回 403，检查 JSON 格式是否已启用。许多公共实例禁用 JSON 接口，优先使用自己的实例。[SearXNG 搜索接口](https://docs.searxng.org/dev/search_api.html)
+3. 在应用中选择 **SearXNG**，填写实例根地址，例如 `http://127.0.0.1:8888`，保存后即可检索。本机地址可使用 HTTP，远程地址必须是 HTTPS。SearXNG 不需要 Brave Key，但需要保持实例运行；搜索词会发送给该实例及其使用的上游搜索服务。
+
+模型服务商以及你选择的检索服务可能消耗各自的 API 配额或资源。对话内容会发送给模型服务商，搜索词会发送给所选检索来源。密钥、对话与草稿保存在本机数据目录的独立文件中，权限为仅当前用户可读写；它们不会包含在学习备份或公开发行包内。可在界面中删除密钥、清空对话。联网摘要只代表搜索结果，AI 生成的资料链接也可能不准确，请在导入前核对。应用不会替你完成课程实验。
+
+模型接口参考：[DeepSeek 的 OpenAI 兼容 Chat Completions 示例](https://api-docs.deepseek.com/api/create-chat-completion/)。DeepSeek API 的内置 `web_search` 工具目前会被忽略，因此使用它时仍需配置一个外部检索来源。[DeepSeek 官方说明](https://api-docs.deepseek.com/zh-cn/guides/responses_api/)
 
 ## 导入自己的计划
 
@@ -139,6 +172,12 @@ JSON 根节点必须是对象。以下字段构成可导入计划的主要结构
 
 ## 开发与验证
 
+### 开发日志
+
+每次新增、修改或删除项目内容时，须在同一批变更中更新 [log.md](log.md)。日志按日期记录变更内容、涉及文件和验证结果；文档、测试、打包脚本的改动也要记录。若尚未运行验证，写明“未运行”及原因。不要在日志中写入个人计划、学习记录或 API 密钥。
+
+`log.md` 记录逐次开发过程；[CHANGELOG.md](CHANGELOG.md) 汇总对用户有影响的版本变化。准备 GitHub 发行文件时，源码包和安装包也应包含开发日志。
+
 在源码根目录运行自动化测试：
 
 ```bash
@@ -151,4 +190,4 @@ python3 -m unittest discover -s tests -v
 python3 packaging/build_deb.py
 ```
 
-打包脚本生成可发布的 `.deb`；发布前请按 [发行说明](docs/release_1.0.0.md) 检查文件清单，确认没有加入个人课程 JSON、数据库或备份。
+打包脚本生成可发布的 `.deb`；发布前请按 [发行说明](docs/release_1.1.0.md) 检查文件清单，确认没有加入个人课程 JSON、数据库、备份或 API 密钥。
