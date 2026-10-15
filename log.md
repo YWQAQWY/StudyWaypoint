@@ -4,6 +4,18 @@
 
 ## 2026-10-15
 
+### 1.4.0：桌面工作区 UI 与 AI 规划交互升级
+
+- 修改 `static/index.html`、`static/app.js`、`static/style.css`：左侧可折叠导航、单一滑动选中背景、工作区顶部工具栏、统一浅色/深色 Design Tokens 与 Motion Tokens、主题及导航状态本机保存、键盘与减少动态效果支持；统一日历、每日任务和设置页面的卡片与表单样式。
+- 修改 `static/ai.js`：可拖动 AI 聊天/PlanDraft 双栏，独立消息与草稿滚动区、固定确认操作区；按稳定阶段/任务 ID 局部更新，保留折叠和滚动位置；展示生成、校验、导入、成功或失败状态。模型与搜索配置移至现有“设置与备份”页面，未配置模型时仍可从 AI 页面设置。
+- 修改 `ai_planner.py`：为现有 OpenAI 兼容聊天加入 SSE 增量读取、工具调用分块聚合、取消与大小限制；提供本机活动文本供现有聊天窗口轮询显示；服务商拒绝流式请求时回退现有普通 Chat Completions。既定 v3 Schema、PlanDraft 确认快照和原计划导入器未改动。
+- 修改 `server.py`、`static/app.js`、`static/ai.js` 和 `.gitignore`：新增私有 `ui_preferences.json` 与本机布局偏好 API，原子写入主题、导航、计划栏和阶段折叠状态，并在页面加载时注入，解决桌面窗口每次启动使用新端口导致浏览器存储无法恢复的问题。修复已收起的计划栏在重启后被草稿自动展开；页面切换时保留聊天和草稿阅读位置。
+- 修改 `static/app.js`、`static/ai.js`：快速连续切页时取消上一次页面动画；草稿阶段和任务重复重排时取消旧位移动画，移除节点时清理对应动画。
+- 新增 `tests/test_ai_stream.py`，扩展 `tests/test_ai_sidebar.py`；更新 `CURRENT_UI.txt`、`README.md`、`USER_GUIDE.md`、`CHANGELOG.md`。更新 `packaging/build_deb.py`、`packaging/build_release.py`、`packaging/install_user.py` 并新增 `RELEASE_NOTES_1.4.0.md`、`docs/release_1.4.0.md`，将此次界面与文档纳入 1.4.0 发行。
+- 新增 `tests/test_ui_preferences.py`，验证字段拒绝、0600 文件权限、同一数据目录换端口恢复和跨站来源拒绝；更新 `README.md`、`USER_GUIDE.md`、`CURRENT_UI.txt` 与发行说明，标注布局偏好文件及发行排除要求。
+- 修改 `server.py` 与 `tests/test_ui_preferences.py`：布局偏好文件损坏时回到默认界面设置，避免非核心配置损坏阻止应用启动；下一次正常保存会覆盖无效内容。
+- 阶段验证：原有 44/44 回归通过；新增流式回复测试 3/3、布局偏好测试 2/2 通过。隔离数据目录下的本机浏览器实测导航收展、主题、AI 计划栏拖动与收展、阶段折叠、聊天和确认按钮；换端口 8879 → 8881 后仍恢复深色主题与展开导航。最终 `python3 -m unittest discover -s tests -q` 49/49 通过；Python 编译、JavaScriptCore 语法检查和 `git diff --check` 通过。1.4.0 `.deb` 与源码包构建成功，SHA-256 校验通过，包内只有通用示例，无数据目录、个人计划、布局偏好、数据库、备份或密钥文件。未进行可靠的逐帧性能分析，也未使用真实外部模型或搜索服务验收。
+
 ### 当前前端 UI 文本说明
 
 - 新增 `CURRENT_UI.txt`，依据当前 HTML、JavaScript、CSS 与桌面窗口代码，记录导航、主要页面、AI 侧栏、桌面按钮和窄屏布局；使用通用占位描述，不包含个人计划或学习记录。

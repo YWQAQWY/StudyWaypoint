@@ -1,14 +1,14 @@
-# StudyWaypoint 1.1 使用指南
+# StudyWaypoint 1.4.0 使用指南
 
 ## 1. 适用范围与下载
 
-本版是适用于 Ubuntu/Debian 图形桌面的独立窗口程序。发行文件包括 `studywaypoint_1.3.0_all.deb`（安装包）、`StudyWaypoint-1.3.0-source.zip`（源码及示例）、`SHA256SUMS`（校验值）。安装包仍需系统提供 Python 3.11+、GTK 3、WebKitGTK 4.1；`apt` 会处理软件包依赖。课程与学习记录保存在本机；打开课程网站、使用 AI 对话和联网检索时需要网络。没有 Windows/macOS 安装包。
+本版是适用于 Ubuntu/Debian 图形桌面的独立窗口程序。发行文件包括 `studywaypoint_1.4.0_all.deb`（安装包）、`StudyWaypoint-1.4.0-source.zip`（源码及示例）、`SHA256SUMS`（校验值）。安装包仍需系统提供 Python 3.11+、GTK 3、WebKitGTK 4.1；`apt` 会处理软件包依赖。课程与学习记录保存在本机；打开课程网站、使用 AI 对话和联网检索时需要网络。没有 Windows/macOS 安装包。
 
 在发行文件目录中执行：
 
 ```bash
 sha256sum -c SHA256SUMS
-sudo apt install ./studywaypoint_1.3.0_all.deb
+sudo apt install ./studywaypoint_1.4.0_all.deb
 ```
 
 若没有管理员权限，且上述系统依赖已经存在，可解压源码包后执行：
@@ -20,6 +20,10 @@ python3 packaging/install_user.py
 此方式安装到当前用户的 `~/.local/opt/StudyWaypoint/`，并创建 `~/.local/bin/studywaypoint` 与应用菜单项。更新安装包或重复运行用户安装脚本均保留位于数据目录的学习记录。安装后从应用菜单搜索“StudyWaypoint”，或在终端运行 `studywaypoint`。无需手动启动本地服务。
 
 源码包还可以直接运行：`./run-desktop.sh`。只需浏览器时，运行 `python3 server.py`，访问 `http://127.0.0.1:8765`。浏览器版默认只监听本机。
+
+### 桌面工作区
+
+左侧菜单可收起成图标栏，再点菜单顶部按钮可展开；当前页面始终有选中标记。顶部按钮切换明暗主题，“设置与备份”→“外观”可设为跟随系统、浅色或深色。AI 规划页面中间的分隔线可拖动，聚焦后也能用左右方向键调整；聊天区和草稿区分别滚动，草稿确认按钮固定在计划栏底部。输入消息后按 `Ctrl+Enter` 或 `⌘+Enter` 可发送。菜单宽度、主题、计划栏开合/宽度以及阶段折叠状态保存在本机数据目录的 `ui_preferences.json`，桌面窗口重启后会恢复。系统开启“减少动态效果”时，页面会降低动画幅度。详细结构见 `CURRENT_UI.txt`。
 
 ## 2. 第一次使用
 
@@ -34,17 +38,17 @@ python3 packaging/install_user.py
 
 ## 2A. 使用 AI 讨论并生成计划
 
-1. 打开“AI 规划”，配置自己订阅的 OpenAI 兼容 API 的 HTTPS 基础地址、API Key 和模型名称。程序向基础地址追加 `/chat/completions`；`https://api.deepseek.com` 和 `deepseek-v4-pro` 只是默认示例，可改为其他兼容服务提供的地址与模型。推理强度默认“高”，服务商不支持 `reasoning_effort` 参数时选“服务商默认”。密钥保存在本机数据目录的 `ai_config.json`，不会返回到浏览器，也不会进入课程备份。
+1. 在“设置与备份”配置自己订阅的 OpenAI 兼容 API 的 HTTPS 基础地址、API Key 和模型名称。程序向基础地址追加 `/chat/completions`；`https://api.deepseek.com` 和 `deepseek-v4-pro` 只是默认示例，可改为其他兼容服务提供的地址与模型。推理强度默认“高”，服务商不支持 `reasoning_effort` 参数时选“服务商默认”。密钥保存在本机数据目录的 `ai_config.json`，不会返回到浏览器，也不会进入课程备份。
 2. 在对话框中说明学习目标、当前基础、每天或每周可投入时间、想完成的作品和验收方式。应用先生成内部结构化草稿，允许信息不全；侧栏显示计划名称、目标、时间、阶段、任务、资源与待确认问题。对话记录存在本机 `ai_conversation.json`，内部草稿存在 `ai_plan_draft.json`。刷新或重启后可恢复。
 3. 若要让 AI 基于联网资料提出路线，先配置并测试 SearXNG；默认模式只访问它。可主动启用 Brave 并填写 Key，正常时优先使用 Brave，故障时回退到 SearXNG。模型可在现有对话中按需调用系统课程、具体任务、网页检索与有限网页读取工具；不支持工具调用时，明确的规划或资源请求会触发兼容检索。也可点击“联网检索系统课程”。未配置搜索时仍可普通对话。
-4. 继续自然语言反馈，例如“我已会 Python，删去基础”“每周改为 10 小时”“第三阶段增加项目”。侧栏会显示新的修订号并高亮变化；未修改的阶段和任务保留。模型用结构化局部更新修改草稿，应用校验并合并；模糊或冲突的关键问题会留在“待确认事项”中。搜索返回后，真实资源才进入草稿。侧栏可以收起，小屏幕显示为抽屉。
+4. 继续自然语言反馈，例如“我已会 Python，删去基础”“每周改为 10 小时”“第三阶段增加项目”。侧栏会显示新的修订号并高亮变化；未修改的阶段和任务保留。模型用结构化局部更新修改草稿，应用校验并合并；模糊或冲突的关键问题会留在“待确认事项”中。搜索返回后，真实资源才进入草稿。侧栏可以收起，也可拖动分隔线调整宽度；较窄的桌面窗口中侧栏显示为覆盖面板。
 5. 侧栏显示“可确认”后，检查资源、任务与时间安排，点击**“确认计划并导入”**。若计划 ID 已在计划库中，侧栏会要求勾选更新现有计划，原有进度会保留。程序冻结当前修订，生成既有 v3 JSON、校验链接与格式，并自动调用原计划导入模块；无需下载或手动上传。成功后点击“查看导入的计划”。同一确认请求重复发送不会重复创建计划；失败会保留草稿、对话与错误信息，可修正或重试。原有手动生成方式保留在折叠的“旧版手动生成草稿”区域。
 
-**内部草稿与最终格式：**`ai_plan_draft.json` 是编辑状态，支持部分计划、修订号、阶段与任务稳定 ID、待确认问题和确认快照。它不能直接导入。最终课程仍严格使用现有 v3 JSON 格式，且需通过原校验器；内部字段、搜索配置和密钥不会进入计划。模型回复沿用现有非流式接口，侧栏通过本机状态轮询更新，可在搜索尚未完成时先看到草稿。
+**内部草稿与最终格式：**`ai_plan_draft.json` 是编辑状态，支持部分计划、修订号、阶段与任务稳定 ID、待确认问题和确认快照。它不能直接导入。最终课程仍严格使用现有 v3 JSON 格式，且需通过原校验器；内部字段、搜索配置和密钥不会进入计划。兼容模型可流式显示普通对话和工具调用回复；若模型不接受流式请求，应用会回退普通回复。侧栏通过本机状态轮询更新，可在搜索尚未完成时先看到草稿。
 
-**使用 Brave Search：**访问 [Brave Search API 控制台](https://api-dashboard.search.brave.com/)，开通 Search 计划，在 API Keys 中创建并复制 Key。在应用里勾选“启用第三方搜索”，填写 Key，保存后点击“测试 Brave”。关闭开关立即使新请求转回 SearXNG，已保存的 Key 会保留，删除需单独勾选。未填写 Key 时会提示并使用 SearXNG。Brave 按 `X-Subscription-Token` 认证，额度及费用以控制台为准。[Brave 官方步骤](https://api-dashboard.search.brave.com/documentation/quickstart)
+**使用 Brave Search：**访问 [Brave Search API 控制台](https://api-dashboard.search.brave.com/)，开通 Search 计划，在 API Keys 中创建并复制 Key。在“设置与备份”里勾选“启用第三方搜索”，填写 Key，保存后点击“测试 Brave”。关闭开关立即使新请求转回 SearXNG，已保存的 Key 会保留，删除需单独勾选。未填写 Key 时会提示并使用 SearXNG。Brave 按 `X-Subscription-Token` 认证，额度及费用以控制台为准。[Brave 官方步骤](https://api-dashboard.search.brave.com/documentation/quickstart)
 
-**不用 Brave Key：**按 [SearXNG 官方容器安装指南](https://docs.searxng.org/admin/installation-docker.html)用 Docker 或 Podman 运行自己的实例，在 `settings.yml` 的 `search.formats` 中加入 `json`（保留 `html`）。通过 `curl 'http://127.0.0.1:8888/search?q=python&format=json'` 确认返回含 `results` 的 JSON。然后在应用里填写实例根地址 `http://127.0.0.1:8888`，保存并点击“测试 SearXNG”；根据实际端口修改地址。远程实例需使用 HTTPS。公共实例可能禁用 JSON，返回 403 时应检查实例设置。发行包不附带搜索服务，也不指定未经控制的公共实例；本机没有 Docker/Podman 时可连接自己受控的远程 HTTPS 实例。[SearXNG 搜索接口](https://docs.searxng.org/dev/search_api.html)
+**不用 Brave Key：**按 [SearXNG 官方容器安装指南](https://docs.searxng.org/admin/installation-docker.html)用 Docker 或 Podman 运行自己的实例，在 `settings.yml` 的 `search.formats` 中加入 `json`（保留 `html`）。通过 `curl 'http://127.0.0.1:8888/search?q=python&format=json'` 确认返回含 `results` 的 JSON。然后在“设置与备份”填写实例根地址 `http://127.0.0.1:8888`，保存并点击“测试 SearXNG”；根据实际端口修改地址。远程实例需使用 HTTPS。公共实例可能禁用 JSON，返回 403 时应检查实例设置。发行包不附带搜索服务，也不指定未经控制的公共实例；本机没有 Docker/Podman 时可连接自己受控的远程 HTTPS 实例。[SearXNG 搜索接口](https://docs.searxng.org/dev/search_api.html)
 
 模型服务商及所选检索来源的调用可能消耗你的配额或资源。对话内容发送给模型服务商，检索词发送给实际检索来源；SearXNG 还会向其配置的上游搜索服务发起查询。密钥、本机对话、检索证据、内部草稿和最终 JSON 草稿与课程备份分开保存，可在界面中清除。搜索标题与摘要仅代表提供者返回的元数据；正文无法读取时不会声称已核实课程目录。现有 v3 格式要求每周至少两条 LeetCode 题目链接、每天至少一条阅读资源，生成的所有链接必须来自搜索证据或用户提供的网址。没有可追溯链接时会提示失败；确认前请核对 AI 生成的资源与验收标准。AI 不会替你完成实验。
 
@@ -77,7 +81,7 @@ python3 packaging/install_user.py
 
 恢复时先预览各表的记录数变化，再确认替换当前计划的数据库。恢复前应用会自动把当前内容保存到数据目录的 `backups/`，保留最近 5 份。新备份带有 `plan_id`，只能在对应计划中恢复；早期无 `plan_id` 的备份须先导入对应课程 JSON；程序只有在备份的全部课程日快照与当前计划完全匹配时才允许恢复。恢复前要先结束计时。
 
-安装版默认数据目录是 `~/.local/share/studywaypoint/`；通用示例计划保存在其 `builtin/tracker.sqlite3`。其他计划位于 `plans/<plan_id 的 SHA-256 前 24 位>/`，各自有 `curriculum.json` 和 `tracker.sqlite3`。同一计划替换前的 JSON 保存在该目录的 `source_versions/`，最多 5 份。`plan_library.json` 记录当前激活的计划。设置 `TRACKER_DATA_DIR` 环境变量可指定数据目录。
+安装版默认数据目录是 `~/.local/share/studywaypoint/`；通用示例计划保存在其 `builtin/tracker.sqlite3`。其他计划位于 `plans/<plan_id 的 SHA-256 前 24 位>/`，各自有 `curriculum.json` 和 `tracker.sqlite3`。同一计划替换前的 JSON 保存在该目录的 `source_versions/`，最多 5 份。`plan_library.json` 记录当前激活的计划，`ui_preferences.json` 记录桌面布局和主题偏好，均不进入课程备份或发行包。设置 `TRACKER_DATA_DIR` 环境变量可指定数据目录。
 
 直接运行浏览器版默认使用源码目录的 `data/`；桌面版使用上述用户数据目录。升级当前用户安装的旧桌面版时，安装脚本会复制旧数据目录到 `~/.local/share/studywaypoint/`，保留旧目录作为备份；`packaging/install_user.py` 会将旧安装附带的私人课程与旧数据库复制到独立的计划目录，并继续显示该计划。通过旧 `.deb` 安装的用户请在升级前保存自己的课程 JSON 和备份；新版安装后先导入原课程，再恢复相应备份。公开发行包不含私人课程。
 

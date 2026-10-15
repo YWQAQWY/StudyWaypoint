@@ -109,7 +109,7 @@ def _searxng_url(value) -> str:
 
 
 class AIPlanner:
-    def __init__(self, data_dir: str | Path, transport=None, search_transport=None):
+    def __init__(self, data_dir: str | Path, transport=None, search_transport=None, stream_transport=None):
         self.data_dir = Path(data_dir)
         self.config_path = self.data_dir / "ai_config.json"
         self.history_path = self.data_dir / "ai_conversation.json"
@@ -118,6 +118,8 @@ class AIPlanner:
         self._lock = threading.RLock()
         self._config_lock = threading.RLock()
         self._transport = transport or self._http_json
+        self._stream_transport = stream_transport if stream_transport is not None else (
+            self._http_stream if transport is None else None)
         self._search_transport = search_transport or self._http_json
         self._router = SearchRouter(self._config,
                                     lambda *args, **kwargs: self._search_transport(*args, **kwargs))
@@ -125,6 +127,72 @@ class AIPlanner:
         self._job = None
         self._cancel_event = threading.Event()
         self._activity = ""
+        self._partial_text = ""
+
+    def _http_stream(self, url, headers, payload, on_delta, timeout=180):
+        """Aggregate OpenAI-compatible SSE chunks into the existing response shape."""
+        request = urllib.request.Request(url, data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                                         headers={**headers, "Accept": "text/event-stream"}, method="POST")
+        chunks, calls, finish, size = [], {}, None, 0
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                content_type = response.headers.get("Content-Type", "") if hasattr(response, "headers") else ""
+                if "application/json" in content_type:
+                    raw = response.read(8_000_001)
+                    if len(raw) > 8_000_000:
+                        raise TrackerError("外部 API 响应过大", "upstream_error", 502)
+                    return json.loads(raw)
+                for raw in iter(lambda: response.readline(1_000_001), b""):
+                    if self._cancel_event.is_set():
+                        raise TrackerError("请求已取消", "cancelled", 409)
+                    size += len(raw)
+                    if size > 8_000_000 or len(raw) > 1_000_000:
+                        raise TrackerError("模型流式回复过大", "upstream_error", 502)
+                    if not raw.startswith(b"data:"):
+                        continue
+                    data = raw[5:].strip()
+                    if not data:
+                        continue
+                    if data == b"[DONE]":
+                        break
+                    event = json.loads(data)
+                    choice = (event.get("choices") or [{}])[0]
+                    delta = choice.get("delta") or {}
+                    content = delta.get("content")
+                    if isinstance(content, str) and content:
+                        chunks.append(content)
+                        on_delta("".join(chunks))
+                    for tool in delta.get("tool_calls") or []:
+                        index = tool.get("index")
+                        if type(index) is not int or not 0 <= index < 8:
+                            continue
+                        current = calls.setdefault(index, {"id": "", "type": "function",
+                                                           "function": {"name": "", "arguments": ""}})
+                        if tool.get("id"):
+                            current["id"] += str(tool["id"])
+                        function = tool.get("function") or {}
+                        for key in ("name", "arguments"):
+                            if function.get(key):
+                                current["function"][key] += str(function[key])
+                    if choice.get("finish_reason"):
+                        finish = choice["finish_reason"]
+        except urllib.error.HTTPError as exc:
+            detail = exc.read(2000).decode("utf-8", errors="replace")
+            for secret in (headers.get("Authorization", "").removeprefix("Bearer "),):
+                if secret:
+                    detail = detail.replace(secret, "[已隐藏密钥]")
+            raise TrackerError(f"外部 API 返回 {exc.code}：{detail[:400]}",
+                               f"upstream_http_{exc.code}", 502) from exc
+        except (urllib.error.URLError, TimeoutError) as exc:
+            raise TrackerError("无法连接流式模型 API", "upstream_error", 502) from exc
+        except (ValueError, TypeError, IndexError, AttributeError) as exc:
+            raise TrackerError("模型流式回复格式无效", "upstream_error", 502) from exc
+        if not finish:
+            raise TrackerError("模型流式回复未正常结束", "upstream_error", 502)
+        message = {"content": "".join(chunks)}
+        if calls:
+            message["tool_calls"] = [calls[index] for index in sorted(calls)]
+        return {"choices": [{"finish_reason": finish, "message": message}]}
 
     @staticmethod
     def _http_json(url, headers, payload=None, timeout=180):
@@ -234,10 +302,13 @@ class AIPlanner:
         return {"cancel_requested": True}
 
     def activity(self):
-        return {"status": self._activity}
+        return {"status": self._activity, "partial_text": self._partial_text[:30000]}
 
     def _set_activity(self, value):
         self._activity = value
+
+    def _set_partial(self, value):
+        self._partial_text = value
 
     def _enabled(self):
         config = self._config()
@@ -245,10 +316,11 @@ class AIPlanner:
             raise TrackerError("请先配置兼容 API 的 Key", "ai_not_configured", 409)
         return config
 
-    def _request_completion(self, messages, *, json_mode=False, max_tokens=8000, tools=None):
+    def _request_completion(self, messages, *, json_mode=False, max_tokens=8000, tools=None,
+                            stream_callback=None):
         config = self._enabled()
         payload = {"model": config.get("model", "deepseek-v4-pro"), "messages": messages,
-                   "max_tokens": max_tokens, "stream": False}
+                   "max_tokens": max_tokens, "stream": bool(stream_callback and self._stream_transport)}
         if config.get("reasoning_effort", "high") != "default":
             payload["reasoning_effort"] = config.get("reasoning_effort", "high")
         if json_mode:
@@ -260,17 +332,23 @@ class AIPlanner:
         headers = {"Authorization": "Bearer " + config["api_key"],
                    "Content-Type": "application/json", "Accept": "application/json"}
         try:
-            response = self._transport(endpoint, headers, payload)
+            response = (self._stream_transport(endpoint, headers, payload, stream_callback)
+                        if payload["stream"] else self._transport(endpoint, headers, payload))
         except TrackerError as exc:
-            if json_mode and "外部 API 返回 400" in str(exc):
+            if payload["stream"] and exc.code in ("upstream_http_400", "upstream_http_422",
+                                                   "upstream_http_501"):
+                payload["stream"] = False
+                response = self._transport(endpoint, headers, payload)
+            elif json_mode and "外部 API 返回 400" in str(exc):
                 payload.pop("response_format", None)
                 response = self._transport(endpoint, headers, payload)
             else:
                 raise
         return response
 
-    def _completion(self, messages, *, json_mode=False, max_tokens=8000):
-        response = self._request_completion(messages, json_mode=json_mode, max_tokens=max_tokens)
+    def _completion(self, messages, *, json_mode=False, max_tokens=8000, stream_callback=None):
+        response = self._request_completion(messages, json_mode=json_mode, max_tokens=max_tokens,
+                                            stream_callback=stream_callback)
         try:
             choice = response["choices"][0]
             content = choice["message"]["content"]
@@ -503,9 +581,10 @@ class AIPlanner:
                 raise TrackerError("请求已取消", "cancelled", 409)
             self._set_activity("正在分析学习目标与检索需求")
             try:
-                response = self._request_completion(messages, tools=SEARCH_TOOLS, max_tokens=5000)
+                response = self._request_completion(messages, tools=SEARCH_TOOLS, max_tokens=5000,
+                                                    stream_callback=self._set_partial)
             except TrackerError as exc:
-                if "返回 400" in str(exc):
+                if exc.code in ("upstream_http_400", "upstream_http_422"):
                     break  # Compatible provider may not support tools.
                 raise
             try:
@@ -521,11 +600,13 @@ class AIPlanner:
                 if not isinstance(answer, str) or not answer.strip():
                     raise TrackerError("模型没有返回可用回答", "upstream_error", 502)
                 if not used_tool and self._needs_search(message, history):
+                    self._partial_text = ""
                     break  # Deterministic compatibility path for providers that ignore tools.
                 if not history["evidence"] and history.get("last_search_status"):
                     return "联网检索未完成：" + history["last_search_status"][:300] + "\n" + answer.strip()
                 return answer.strip()
             used_tool = True
+            self._partial_text = ""
             messages.append({"role": "assistant", "content": assistant.get("content"),
                              "tool_calls": calls[:4]})
             for call in calls[:4]:
@@ -553,7 +634,8 @@ class AIPlanner:
                 history["last_search_status"] = "联网检索未取得资源；可继续普通对话，但不得声称已联网"
         self._set_activity("正在整理学习建议")
         answer = self._completion(self._messages(history) + [{"role": "user", "content": message +
-            "\n若联网检索未取得资源，请明确说明，绝不要编造链接。"}], max_tokens=8000)
+            "\n若联网检索未取得资源，请明确说明，绝不要编造链接。"}], max_tokens=8000,
+            stream_callback=self._set_partial)
         if self._cancel_event.is_set():
             raise TrackerError("请求已取消", "cancelled", 409)
         if not history["evidence"] and history.get("last_search_status"):
@@ -605,6 +687,7 @@ class AIPlanner:
             if self._job and self._job["status"] == "running":
                 raise TrackerError("请等待计划生成结束后继续对话", "job_running", 409)
             self._cancel_event = threading.Event()
+            self._partial_text = ""
             history = self._history()
             try:
                 planning = bool(self._search_intent(message)) or (
@@ -613,7 +696,8 @@ class AIPlanner:
                     self._set_activity("正在更新规划草稿")
                     self._update_plan_draft(history, message)
                 answer = self._tool_chat(history, message) if self._search_intent(message) else self._completion(
-                    self._messages(history) + [{"role": "user", "content": message}])
+                    self._messages(history) + [{"role": "user", "content": message}],
+                    stream_callback=self._set_partial)
                 if planning:
                     self.plan_drafts.enrich(history["conversation_id"], history.get("evidence", []))
                 if self._cancel_event.is_set():
@@ -626,6 +710,7 @@ class AIPlanner:
                 return {"answer": answer, "history": history}
             finally:
                 self._set_activity("")
+                self._partial_text = ""
 
     def _search(self, query, config):
         # Keep this narrow adapter for callers of the former search method.

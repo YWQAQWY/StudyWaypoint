@@ -6,6 +6,8 @@ import json
 import mimetypes
 import os
 import re
+import tempfile
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -13,6 +15,56 @@ from urllib.parse import unquote, urlsplit
 from tracker import ROOT, TrackerError
 from plan_library import PlanLibrary
 from ai_planner import AIPlanner
+
+UI_PREF_LOCK = threading.RLock()
+
+
+def read_ui_preferences(data_dir):
+    path = Path(data_dir) / "ui_preferences.json"
+    with UI_PREF_LOCK:
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (FileNotFoundError, ValueError):
+            return {}
+        except OSError as exc:
+            raise TrackerError("无法读取桌面布局偏好", "ui_preferences_error", 500) from exc
+    return value if isinstance(value, dict) else {}
+
+
+def save_ui_preferences(data_dir, value):
+    if not isinstance(value, dict):
+        raise TrackerError("布局偏好必须是对象")
+    unknown = set(value) - {"theme", "navCollapsed", "aiSidebarOpen", "aiSplitWidth", "closedStages"}
+    if unknown or value.get("theme", "system") not in ("system", "light", "dark"):
+        raise TrackerError("布局偏好字段无效")
+    if any(key in value and type(value[key]) is not bool for key in ("navCollapsed", "aiSidebarOpen")):
+        raise TrackerError("导航或计划栏状态无效")
+    width = value.get("aiSplitWidth", 450)
+    if type(width) is not int or not 320 <= width <= 620:
+        raise TrackerError("计划栏宽度无效")
+    stages = value.get("closedStages", [])
+    if (not isinstance(stages, list) or len(stages) > 100 or any(
+            not isinstance(item, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", item)
+            for item in stages)):
+        raise TrackerError("阶段折叠状态无效")
+    normalized = {"theme": value.get("theme", "system"),
+                  "navCollapsed": value.get("navCollapsed", False),
+                  "aiSidebarOpen": value.get("aiSidebarOpen", True),
+                  "aiSplitWidth": width, "closedStages": list(dict.fromkeys(stages))}
+    path = Path(data_dir) / "ui_preferences.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with UI_PREF_LOCK:
+        fd, temporary = tempfile.mkstemp(prefix=".ui-preferences-", dir=path.parent, text=True)
+        try:
+            os.chmod(temporary, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                json.dump(normalized, stream, ensure_ascii=False)
+                stream.write("\n")
+            os.replace(temporary, path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+    return normalized
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -44,7 +96,7 @@ class Handler(BaseHTTPRequestHandler):
     def _handle(self, method):
         path = urlsplit(self.path).path
         try:
-            if path.startswith("/api/ai/"):
+            if path.startswith("/api/ai/") or path == "/api/ui/preferences":
                 self._require_ai_local()
             if not path.startswith("/api/"):
                 if method != "GET":
@@ -54,7 +106,12 @@ class Handler(BaseHTTPRequestHandler):
                 if path not in ("/index.html", "/style.css", "/app.js", "/ai.js"):
                     raise TrackerError("未找到页面", "not_found", 404)
                 file = ROOT / "static" / path.lstrip("/")
-                self._send(200, file.read_bytes(), mimetypes.guess_type(file)[0] or "text/plain")
+                body = file.read_bytes()
+                if path == "/index.html":
+                    preferences = json.dumps(read_ui_preferences(self.tracker.data_dir), ensure_ascii=False)
+                    preferences = preferences.replace("<", "\\u003c")
+                    body = body.replace(b"/*__UI_PREFS__*/{}", preferences.encode("utf-8"), 1)
+                self._send(200, body, mimetypes.guess_type(file)[0] or "text/plain")
                 return
             result = self._dispatch(method, path)
             self._send(200, result)
@@ -86,6 +143,12 @@ class Handler(BaseHTTPRequestHandler):
     def _dispatch(self, method, path):
         if path.startswith("/api/ai/"):
             return self._dispatch_ai(method, path)
+        if path == "/api/ui/preferences":
+            if method == "GET":
+                return read_ui_preferences(self.tracker.data_dir)
+            if method == "PUT":
+                return save_ui_preferences(self.tracker.data_dir, self._json())
+            raise TrackerError("不支持的方法", "method_not_allowed", 405)
         with self.tracker._lock:
             return self._dispatch_unlocked(method, path)
 

@@ -13,4 +13,5 @@ ai_config.json
 ai_conversation.json
 ai_draft.json
 ai_plan_draft.json
+ui_preferences.json
 dist/

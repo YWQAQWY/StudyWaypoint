@@ -1,6 +1,39 @@
 const app = document.getElementById('app');
 const notice = document.getElementById('message');
 const state = { bootstrap:null, days:[], day:null, view:'today', week:1, active:null, restoreData:null, importData:null };
+const UI_PREF_KEY='studywaypoint.ui.v1';
+function readUiPrefs() { try { return {...JSON.parse(localStorage.getItem(UI_PREF_KEY)||'{}'),...window.__initialUiPrefs}; } catch (_) { return window.__initialUiPrefs||{}; } }
+const uiPrefs={...readUiPrefs(),aiSidebarOpen:aiState.sidebarOpen,
+  aiSplitWidth:aiState.splitWidth,closedStages:[...aiState.closedStages].slice(-100)};
+let pendingPrefsWrite=Promise.resolve();
+function saveUiPrefs() {
+  const snapshot={...uiPrefs};
+  try { localStorage.setItem(UI_PREF_KEY,JSON.stringify(snapshot)); } catch (_) { /* Storage can be disabled. */ }
+  pendingPrefsWrite=pendingPrefsWrite.catch(()=>{}).then(()=>api('/api/ui/preferences','PUT',snapshot)).catch(()=>{
+    flash('布局偏好未保存，请检查本机数据目录权限',true);
+  });
+}
+function applyTheme() {
+  const systemDark=window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme=uiPrefs.theme==='dark'||uiPrefs.theme==='light' ? uiPrefs.theme : systemDark?'dark':'light';
+  const button=document.getElementById('theme-toggle');
+  if(button) button.textContent=document.documentElement.dataset.theme==='dark'?'☀':'◐';
+}
+function applyNavLayout() {
+  const collapsed=!!uiPrefs.navCollapsed;
+  document.getElementById('desktop-shell').classList.toggle('nav-collapsed',collapsed);
+  const button=document.querySelector('.collapse-button');
+  button.setAttribute('aria-label',collapsed?'展开导航栏':'收起导航栏');
+  button.title=collapsed?'展开导航栏':'收起导航栏';
+  updateNavIndicator();
+}
+function updateNavIndicator() {
+  const selected=document.querySelector('.nav-btn.active'),indicator=document.getElementById('nav-indicator');
+  if(!selected||!indicator) return;
+  indicator.style.transform=`translate3d(0, ${selected.offsetTop}px, 0)`;
+  indicator.style.height=`${selected.offsetHeight}px`;
+}
+let lastRenderedView=null,pageAnimation=null;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pct = n => `${Math.max(0, Math.min(100, n))}%`;
 const minutes = n => `${Math.round(n)} 分钟`;
@@ -33,16 +66,42 @@ async function refresh() {
   else if(state.view==='day') {state.day=null;state.view='calendar';}
   render();
 }
-function setView(view) { state.view=view; render(); if(view==='ai') aiRefresh().catch(e=>flash(e.message,true)); window.scrollTo({top:0,behavior:'smooth'}); }
+function setView(view) {
+  if(state.view==='ai'&&view!=='ai') aiRememberScroll();
+  state.view=view;
+  render();
+  if(view==='ai'||view==='settings') aiRefresh().catch(e=>flash(e.message,true));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 async function openDay(id) { state.day=await api(`/api/days/${id}`); state.week=state.day.week; state.view='day'; render(); window.scrollTo({top:0,behavior:'smooth'}); }
-function nav() { ['today','calendar','ai','settings'].forEach(x => document.getElementById(`nav-${x}`).classList.toggle('active',state.view===x)); }
+function nav() {
+  const active=state.view==='day'?'calendar':state.view;
+  ['today','calendar','ai','settings'].forEach(x => {
+    const button=document.getElementById(`nav-${x}`),selected=active===x;
+    button.classList.toggle('active',selected);
+    if(selected) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
+  });
+  document.getElementById('toolbar-title').textContent=({today:'今天',calendar:'课程日历',day:'每日任务',ai:'AI 规划',settings:'设置与备份'})[state.view];
+  requestAnimationFrame(updateNavIndicator);
+}
 function render() {
+  const switched=lastRenderedView!==state.view;
   nav();
+  app.classList.toggle('ai-page',state.view==='ai');
   if (state.view==='ai') app.innerHTML=aiView();
   else if (state.view==='settings') app.innerHTML=settingsView();
   else if (state.view==='calendar') app.innerHTML=calendarView();
   else if (state.view==='day' && state.day) app.innerHTML=dayView(state.day);
   else app.innerHTML=todayView();
+  if(switched&&state.view==='ai') requestAnimationFrame(aiRestoreScroll);
+  if(switched) {
+    pageAnimation?.cancel();
+    pageAnimation=null;
+    if(lastRenderedView!==null&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches&&app.animate)
+      pageAnimation=app.animate([{opacity:.3,transform:'translateY(7px)'},{opacity:1,transform:'translateY(0)'}],
+        {duration:250,easing:'cubic-bezier(.2,.7,.2,1)'});
+  }
+  lastRenderedView=state.view;
   updateTimer();
 }
 function hero(kicker,title,description,actions='') { return `<div class="hero"><div><div class="eyebrow">${esc(kicker)}</div><h1>${esc(title)}</h1><p class="lead">${esc(description)}</p></div><div class="actions">${actions}</div></div>`; }
@@ -97,13 +156,25 @@ function acceptanceView(a,d) {
 function settingsView() {
   const settings=state.bootstrap.settings;
   const planRows=state.bootstrap.plans.map(p=>`<div class="item"><div class="item-body"><b>${esc(p.plan_name)}</b> ${p.active?'<span class="pill teal">当前计划</span>':''}<div class="item-meta">${esc(p.plan_id)} · ${p.weeks} 周 / ${p.days} 天 / ${p.total_planned_hours} 小时 · v${esc(p.curriculum_version)}</div></div>${p.active?'':`<button class="mini" data-plan="${esc(p.plan_id)}">切换</button>`}</div>`).join('');
-  return `${hero('个人设置','学习计划与数据','每个计划有独立的学习记录。更改起始日期只影响“今日”对应的课程日。')}<div class="grid"><section class="card"><h2>日期与时区</h2><form id="settings-form"><div class="field"><label>学习起始日</label><input name="start_date" type="date" value="${esc(settings.start_date)}" required></div><div class="field"><label>时区</label><input name="timezone" value="${esc(settings.timezone)}" required></div><button class="button primary" type="submit">保存设置</button></form></section><section class="card"><h2>计划库</h2><p>选择同格式的 v3 JSON 文件；先校验并预览差异，再导入。相同 plan_id 更新原计划并保留进度，新 plan_id 建立独立进度。</p>${planRows}<div class="field"><label>导入计划 JSON</label><input id="plan-file" type="file" accept="application/json,.json"></div><div id="plan-result" class="muted"></div><div class="form-row"><button class="button primary" data-action="apply-plan" ${state.importData?'':'disabled'}>确认导入</button><button class="button" data-action="sample-plan">下载示例计划</button></div></section><section class="card"><h2>备份与恢复</h2><p>备份包含当前计划的课程快照与全部学习历史。恢复只影响当前计划。</p><button class="button dark" data-action="export">下载当前计划备份</button><div class="field"><label>选择备份 JSON</label><input id="restore-file" type="file" accept="application/json,.json"></div><div id="restore-result" class="muted"></div><button class="button" data-action="apply-restore" disabled>确认恢复</button></section></div><div class="soft warning" style="margin-top:16px">课程链接需要联网。证据中的路径只作为文字保存；应用不会执行实验代码。</div>`;
+  return `${hero('个人设置','学习计划与数据','管理学习计划、模型连接、搜索服务与桌面外观。每个计划有独立的学习记录。')}
+    <div class="settings-grid"><div class="settings-main">
+      <section class="card"><div class="section-title"><h2>计划库</h2><span class="pill">${state.bootstrap.plans.length} 个计划</span></div><p class="muted">选择 v3 JSON 文件；先校验并预览差异，再确认导入。相同 plan_id 更新原计划并保留进度。</p>${planRows}<div class="field"><label>导入计划 JSON</label><input id="plan-file" type="file" accept="application/json,.json"></div><div id="plan-result" class="muted"></div><div class="form-row"><button class="button primary" data-action="apply-plan" ${state.importData?'':'disabled'}>确认导入</button><button class="button" data-action="sample-plan">下载示例计划</button></div></section>
+      ${typeof aiConfigPanel==='function'?aiConfigPanel():'<section class="card empty">AI 配置加载中…</section>'}
+      <section class="card"><h2>备份与恢复</h2><p class="muted">备份包含当前计划的课程快照与全部学习历史。恢复只影响当前计划。</p><button class="button dark" data-action="export">下载当前计划备份</button><div class="field"><label>选择备份 JSON</label><input id="restore-file" type="file" accept="application/json,.json"></div><div id="restore-result" class="muted"></div><button class="button" data-action="apply-restore" disabled>确认恢复</button></section>
+    </div><div class="settings-side">
+      <section class="card"><h2>外观</h2><p class="muted">主题和桌面布局仅保存在当前设备。</p><div class="appearance-options"><button class="button ${!uiPrefs.theme||uiPrefs.theme==='system'?'selected':''}" type="button" data-theme="system">跟随系统</button><button class="button ${uiPrefs.theme==='light'?'selected':''}" type="button" data-theme="light">浅色</button><button class="button ${uiPrefs.theme==='dark'?'selected':''}" type="button" data-theme="dark">深色</button></div></section>
+      <section class="card"><h2>日期与时区</h2><form id="settings-form"><div class="field"><label>学习起始日</label><input name="start_date" type="date" value="${esc(settings.start_date)}" required></div><div class="field"><label>时区</label><input name="timezone" value="${esc(settings.timezone)}" required></div><button class="button primary" type="submit">保存设置</button></form></section>
+      <div class="soft warning">课程链接需要联网。证据中的路径只作为文字保存；应用不会执行实验代码。</div>
+    </div></div>`;
 }
 function formValues(form) { return Object.fromEntries(new FormData(form).entries()); }
 function downloadJson(data, filename) { const blob=new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000); }
 async function mutate(action, success) { try { await action(); if(success) flash(success); await refresh(); } catch(e) { flash(e.message,true); render(); } }
 document.addEventListener('click', async event => {
-  const node=event.target.closest('[data-view],[data-day],[data-week],[data-plan],[data-action]'); if(!node) return;
+  const submitButton=event.target.closest('form button');
+  if(submitButton?.type==='submit') {event.preventDefault();submitButton.form?.requestSubmit();return;}
+  const node=event.target.closest('[data-view],[data-day],[data-week],[data-plan],[data-action],[data-theme]'); if(!node) return;
+  if(node.dataset.theme) {uiPrefs.theme=node.dataset.theme;saveUiPrefs();applyTheme();render();return;}
   if(node.dataset.view) {
     if (node.dataset.view==='today') { state.view='today'; await refresh(); window.scrollTo({top:0,behavior:'smooth'}); }
     else setView(node.dataset.view);
@@ -113,6 +184,8 @@ document.addEventListener('click', async event => {
   if(node.dataset.week) { state.week=Number(node.dataset.week); setView('calendar'); return; }
   if(node.dataset.plan) return mutate(()=>api('/api/plans/select','POST',{plan_id:node.dataset.plan}),'已切换计划');
   const action=node.dataset.action, day=state.day;
+  if(action==='toggle-nav') {uiPrefs.navCollapsed=!uiPrefs.navCollapsed;saveUiPrefs();applyNavLayout();return;}
+  if(action==='toggle-theme') {uiPrefs.theme=document.documentElement.dataset.theme==='dark'?'light':'dark';saveUiPrefs();applyTheme();if(state.view==='settings') render();return;}
   if(action?.startsWith('ai-')) return aiAction(action);
   if(action==='start-timer') return mutate(async()=>{ state.active=await api('/api/sessions/start','POST',{day_id:day.id}); },'计时已开始');
   if(action==='stop-timer') return mutate(async()=>{ await api('/api/sessions/stop','POST'); state.active=null; },'计时已结束');
@@ -149,4 +222,14 @@ function updateTimer() {
   display.textContent=`${h}:${m}:${s}`;label.textContent='正在计时 · 关闭页面后仍会持续记录';
 }
 setInterval(updateTimer,1000);
+applyTheme();
+applyNavLayout();
+window.addEventListener('resize',updateNavIndicator);
+window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if(!uiPrefs.theme||uiPrefs.theme==='system') applyTheme();});
+document.addEventListener('keydown',event=>{
+  if((event.ctrlKey||event.metaKey)&&event.key==='Enter'&&document.activeElement?.closest('#ai-chat-form')) {
+    event.preventDefault();document.getElementById('ai-chat-form')?.requestSubmit();
+  }
+  if(event.key==='Escape'&&state.view==='ai'&&aiState.sidebarOpen&&document.activeElement?.closest('.ai-side')) aiAction('ai-toggle-sidebar');
+});
 refresh().catch(e => {app.innerHTML=`<div class="card empty">启动失败：${esc(e.message)}</div>`;});

@@ -36,6 +36,14 @@ class AISidebarTests(unittest.TestCase):
         self.assertIn("确认计划并导入", html)
         self.assertIn("修订 2", html)
         self.assertIn("data-plan-stage", html)
+        self.assertIn('class="ai-resizer" role="separator"', html)
+        self.assertIn('class="plan-confirm-bar"', html)
+        self.assertIn('data-draft-id="draft"', html)
+        self.assertNotIn('id="ai-config-form"', html)
+        ctx.evaluate("aiState.partialText='正在整理回答';", -1)
+        self.assertIn("AI · 正在回复", ctx.evaluate("aiView()", -1).to_string())
+        self.assertIn("正在整理回答", ctx.evaluate("aiView()", -1).to_string())
+        self.assertIn('id="ai-config-form"', ctx.evaluate("aiConfigPanel()", -1).to_string())
 
 
 if __name__ == "__main__":

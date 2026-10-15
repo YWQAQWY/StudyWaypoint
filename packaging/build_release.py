@@ -12,7 +12,7 @@ from build_deb import ROOT, VERSION, build
 
 OUTPUT = Path(os.getenv('STUDYWAYPOINT_OUTPUT_DIR', ROOT.parent))
 FILES = [
-    '.gitignore', 'AGENTS.md', 'README.md', 'USER_GUIDE.md', 'CHANGELOG.md', 'log.md',
+    '.gitignore', 'AGENTS.md', 'README.md', 'USER_GUIDE.md', 'CURRENT_UI.txt', 'CHANGELOG.md', 'log.md',
     f'RELEASE_NOTES_{VERSION}.md', 'desktop.py', 'server.py', 'tracker.py',
     'plan_library.py', 'ai_planner.py', 'learning_resources.py', 'plan_draft.py', 'run.sh', 'run-desktop.sh',
 ]

@@ -3,18 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#102a38">
+  <meta name="theme-color" content="#edf1f4">
   <title>StudyWaypoint</title>
+  <script>window.__initialUiPrefs=/*__UI_PREFS__*/{};</script>
+  <script>
+    try {
+      const saved={...JSON.parse(localStorage.getItem('studywaypoint.ui.v1')||'{}'),...window.__initialUiPrefs};
+      document.documentElement.dataset.theme=saved.theme==='light'||saved.theme==='dark' ? saved.theme :
+        (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+    } catch (_) { document.documentElement.dataset.theme='light'; }
+  </script>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="brand-mark">W</span><div><strong>StudyWaypoint</strong><small>导入计划 · 本地保存</small></div></div>
-    <nav aria-label="主导航"><button id="nav-today" class="nav-btn" data-view="today">今天</button><button id="nav-calendar" class="nav-btn" data-view="calendar">课程日历</button><button id="nav-ai" class="nav-btn" data-view="ai">AI 规划</button><button id="nav-settings" class="nav-btn" data-view="settings">设置与备份</button></nav>
-  </header>
-  <div id="message" role="status" aria-live="polite"></div>
-  <main id="app" tabindex="-1"></main>
-  <footer>个人学习计划 · 课程链接需联网打开 · 学习实验由你亲自完成</footer>
+  <div id="desktop-shell" class="desktop-shell">
+    <aside id="app-sidebar" class="app-sidebar" aria-label="应用导航">
+      <div class="sidebar-head">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">W</span><div class="brand-copy"><strong>StudyWaypoint</strong><small>专注每一步学习</small></div></div>
+        <button class="icon-button collapse-button" type="button" data-action="toggle-nav" aria-label="收起导航栏" title="收起导航栏">☰</button>
+      </div>
+      <div class="sidebar-group-label">工作区</div>
+      <nav class="side-nav" aria-label="主导航">
+        <span id="nav-indicator" class="nav-indicator" aria-hidden="true"></span>
+        <button id="nav-today" class="nav-btn" data-view="today" title="今天"><span class="nav-icon" aria-hidden="true">◉</span><span class="nav-label">今天</span></button>
+        <button id="nav-calendar" class="nav-btn" data-view="calendar" title="课程日历"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-label">课程日历</span></button>
+        <button id="nav-ai" class="nav-btn" data-view="ai" title="AI 规划"><span class="nav-icon" aria-hidden="true">✧</span><span class="nav-label">AI 规划</span></button>
+        <button id="nav-settings" class="nav-btn" data-view="settings" title="设置与备份"><span class="nav-icon" aria-hidden="true">⚙</span><span class="nav-label">设置与备份</span></button>
+      </nav>
+      <div class="sidebar-foot"><span class="sidebar-foot-dot" aria-hidden="true"></span><span class="sidebar-foot-label">本地保存 · 由你掌控</span></div>
+    </aside>
+    <div class="workspace">
+      <header class="workspace-toolbar">
+        <div class="toolbar-identity"><span class="toolbar-kicker">学习工作区</span><strong id="toolbar-title">今天</strong></div>
+        <div class="toolbar-actions"><button class="icon-button" type="button" data-action="toggle-theme" id="theme-toggle" title="切换明暗主题" aria-label="切换明暗主题">◐</button></div>
+      </header>
+      <div id="message" role="status" aria-live="polite"></div>
+      <main id="app" tabindex="-1"><div class="card empty">正在读取学习计划…</div></main>
+      <footer>学习实验由你亲自完成 · 课程链接需联网打开</footer>
+    </div>
+  </div>
   <script src="/ai.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
