@@ -11,7 +11,7 @@ StudyWaypoint 是适用于 Ubuntu/Debian 图形桌面的学习计划与进度追
 - **时间记录**：开始、暂停学习计时，或补录线下学习分钟；按理论、实践、验收分配每日时间预算。
 - **证据与验收**：登记产物路径、链接、提交 hash、测试日志等证据，关联到验收项并人工判定结果。
 - **计划库与备份**：预览、导入、更新、切换计划；分别导出和恢复每个计划的数据。
-- **AI 规划**：使用 OpenAI 兼容的 Chat Completions API 讨论学习目标；选择 Brave Search 或 SearXNG 联网检索资料，再生成可预览的 v3 计划草稿。
+- **AI 规划**：使用 OpenAI 兼容的 Chat Completions API 讨论学习目标；默认通过自备 SearXNG 联网检索，主动启用时优先使用 Brave。对话中的结构化草稿在侧栏持续更新，确认后自动生成、校验并导入 v3 计划。
 
 ## 安装与启动
 
@@ -23,10 +23,10 @@ StudyWaypoint 是适用于 Ubuntu/Debian 图形桌面的学习计划与进度追
 
 ### 安装发行版
 
-下载 `studywaypoint_1.1.0_all.deb`，在该文件所在目录运行：
+下载 `studywaypoint_1.3.0_all.deb`，在该文件所在目录运行：
 
 ```bash
-sudo apt install ./studywaypoint_1.1.0_all.deb
+sudo apt install ./studywaypoint_1.3.0_all.deb
 ```
 
 安装后从应用菜单搜索 **StudyWaypoint**，或在终端运行 `studywaypoint`。如果同时下载了 `SHA256SUMS`，可先在发行文件目录执行 `sha256sum -c SHA256SUMS` 核对下载文件。
@@ -62,16 +62,18 @@ python3 packaging/install_user.py
 ## AI 规划：从对话生成计划
 
 1. 打开“AI 规划”，填写自己订阅的 **OpenAI 兼容 API** 的 HTTPS 基础地址、API Key 和模型名称，保存后启用对话。应用向基础地址追加 `/chat/completions`。`https://api.deepseek.com` 与 `deepseek-v4-pro` 只是默认示例；使用其他兼容服务时改成该服务提供的基础地址（如末尾带 `/v1`）和模型名。推理强度默认“高”；若服务商不接受 `reasoning_effort` 参数，改选“服务商默认”。
-2. 告诉 AI 你的基础、目标、可投入时长、希望完成的项目与验收方式。继续对话，直到学习路线和范围基本明确。
-3. 如需**联网检索**，在“联网检索来源”中选择 Brave Search 或 SearXNG，按下方步骤配置，再点击“联网检索并提出路线”。应用会产生搜索词、获取网页标题与摘要，并把来源链接和分析结果显示在对话界面。仅配置模型 API Key 时可以对话，但不能执行此步。
-4. 敲定计划名称、稳定的英文 `plan_id`、周数及一周七天的每日小时数，点击“生成 v3 JSON 草稿”。应用在后台逐周生成任务，补齐日 ID、时间预算等固定结构，最终运行现有课程校验器。生成时间取决于周数和 API 响应；界面会显示进度。
-5. 下载草稿 JSON，核对阅读链接、每日任务、交付物和验收条件。预览会列出新增、变更、未变与移除的学习日。确认后点“确认导入并启用”，计划才写入计划库，可立即从日历开始使用。
+2. 告诉 AI 你的基础、目标、可投入时长、希望完成的项目与验收方式。首次规划回复前，应用会请求结构化草稿更新；侧栏可先展示部分计划和待确认问题。继续自然语言反馈，例如“删掉 Python 基础，第三阶段增加项目”；未修改的阶段和任务会保留稳定 ID。
+3. 如需**联网检索**，先配置并测试自己的 SearXNG 实例。默认只通过 SearXNG 搜索；也可主动启用 Brave Search API，成功时优先使用 Brave，失败时回退 SearXNG。普通对话可不联网；讨论完整路线或具体资源时，模型可在当前对话中调用搜索工具。不支持工具调用的模型会按明确的规划或资源需求执行有限检索。也可点击“联网检索系统课程”。界面显示搜索状态、来源和核实状态。
+4. 检查侧栏中的名称、目标、周期、时长、阶段、任务、资源及待确认问题。周期或时长未确定时继续对话；每周总时长会确定性地分配到七天。模型提交的是局部草稿补丁，应用校验版本并持久化，刷新页面仍可恢复。搜索结果会在返回后补充到草稿；侧栏显示的资源必须来自检索证据。
+5. 确认草稿已符合意图后，点击侧栏底部的**“确认计划并导入”**。如果计划 ID 已存在，须先勾选更新现有计划。应用冻结当前修订，按已确认阶段生成既有 v3 JSON，检查所有链接来源，最多修正两次，再用原有校验器验证并自动调用原计划导入器。完成后点“查看导入的计划”进入日历；整个流程无需手动下载或上传 JSON。失败时保留草稿和聊天，可重试同一次确认。原有手动生成入口仍在折叠的“旧版手动生成草稿”区域。
+
+内部草稿保存在本机 `ai_plan_draft.json`，与最终课程 JSON 分离，包含修订号与确认快照；不会混入导入文件或学习备份。搜索状态和草稿状态分别更新，侧栏可在检索尚未完成时预览草稿。模型回复沿用现有非流式 Chat Completions 调用，侧栏通过本地状态轮询更新。
 
 ### Brave Search：申请并填写 Key
 
 1. 在 [Brave Search API 控制台](https://api-dashboard.search.brave.com/) 注册或登录，按控制台提示开通 Search 计划并创建 API Key。该 Key 属于搜索服务，和模型 API Key 不同；以控制台显示的额度和费用为准。
-2. 在应用“AI 规划”中选择 **Brave Search**，把 Key 填入“Brave Search API Key”，点击“保存配置”。已有 Key 时留空会保留原值。
-3. 先发送学习目标，再点“联网检索并提出路线”。应用把搜索词发给 Brave，按来源列表展示网页标题、摘要与链接。Brave 请求通过 `X-Subscription-Token` 认证。[Brave 官方快速入门](https://api-dashboard.search.brave.com/documentation/quickstart)
+2. 在应用“AI 规划”中勾选**启用第三方搜索**，把 Key 填入“Brave Search API Key”，点击“保存配置”，再点“测试 Brave”。已有 Key 留空会保留原值；关闭开关不会删除 Key。
+3. 启用并保存后，新的联网检索优先访问 Brave；故障时明确提示并尝试回退到已配置的 SearXNG。Brave 请求通过 `X-Subscription-Token` 认证。[Brave 官方快速入门](https://api-dashboard.search.brave.com/documentation/quickstart)
 
 ### SearXNG：不用 Brave Key
 
@@ -85,9 +87,9 @@ python3 packaging/install_user.py
    ```
 
 2. 用 `curl 'http://127.0.0.1:8888/search?q=python&format=json'` 确认返回含 `results` 的 JSON。端口按你的实例实际端口修改；若返回 403，检查 JSON 格式是否已启用。许多公共实例禁用 JSON 接口，优先使用自己的实例。[SearXNG 搜索接口](https://docs.searxng.org/dev/search_api.html)
-3. 在应用中选择 **SearXNG**，填写实例根地址，例如 `http://127.0.0.1:8888`，保存后即可检索。本机地址可使用 HTTP，远程地址必须是 HTTPS。SearXNG 不需要 Brave Key，但需要保持实例运行；搜索词会发送给该实例及其使用的上游搜索服务。
+3. 在应用“AI 规划”中填写实例根地址，例如 `http://127.0.0.1:8888`，保存后点“测试 SearXNG”。本机地址可使用 HTTP，远程地址必须是 HTTPS。默认模式不需要 Brave Key，但实例必须自行部署并持续运行。发行包不自带 SearXNG，也不会硬编码公共实例；未配置或不可达时会显示失败原因，普通模型对话仍可使用。
 
-模型服务商以及你选择的检索服务可能消耗各自的 API 配额或资源。对话内容会发送给模型服务商，搜索词会发送给所选检索来源。密钥、对话与草稿保存在本机数据目录的独立文件中，权限为仅当前用户可读写；它们不会包含在学习备份或公开发行包内。可在界面中删除密钥、清空对话。联网摘要只代表搜索结果，AI 生成的资料链接也可能不准确，请在导入前核对。应用不会替你完成课程实验。
+模型服务商以及你选择的检索服务可能消耗各自的 API 配额或资源。对话内容会发送给模型服务商，搜索词会发送给实际使用的检索来源；SearXNG 还会请求其上游搜索源。密钥、对话、检索证据、内部规划草稿与最终 JSON 草稿保存在本机数据目录的独立文件中，权限为仅当前用户可读写；它们不会包含在学习备份或公开发行包内。可在界面中单独删除密钥、清空对话。`search_result_only` 只说明搜索提供者返回过该链接；`content_verified` 表示应用成功读取了网页正文，不代表课程质量已人工认证。确认前请核对课程、视频章节与网址。现有 v3 格式要求**每周至少两条 LeetCode 题目链接**以及每天至少一条阅读资源；没有可追溯链接时生成会明确失败，不会编造。应用不会替你完成课程实验。
 
 模型接口参考：[DeepSeek 的 OpenAI 兼容 Chat Completions 示例](https://api-docs.deepseek.com/api/create-chat-completion/)。DeepSeek API 的内置 `web_search` 工具目前会被忽略，因此使用它时仍需配置一个外部检索来源。[DeepSeek 官方说明](https://api-docs.deepseek.com/zh-cn/guides/responses_api/)
 
@@ -190,4 +192,4 @@ python3 -m unittest discover -s tests -v
 python3 packaging/build_deb.py
 ```
 
-打包脚本生成可发布的 `.deb`；发布前请按 [发行说明](docs/release_1.1.0.md) 检查文件清单，确认没有加入个人课程 JSON、数据库、备份或 API 密钥。
+打包脚本生成可发布的 `.deb`；发布前请按 [发行说明](docs/release_1.3.0.md) 检查文件清单，确认没有加入个人课程 JSON、数据库、备份或 API 密钥。

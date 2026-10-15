@@ -79,7 +79,7 @@ def install() -> dict[str, Path]:
     app_dir.parent.mkdir(parents=True, exist_ok=True)
     staged = Path(tempfile.mkdtemp(prefix=".studywaypoint-", dir=app_dir.parent))
     try:
-        for relative in ("desktop.py", "server.py", "tracker.py", "plan_library.py", "ai_planner.py", "static", "examples", "assets"):
+        for relative in ("desktop.py", "server.py", "tracker.py", "plan_library.py", "ai_planner.py", "learning_resources.py", "plan_draft.py", "static", "examples", "assets"):
             source = ROOT / relative
             target = staged / relative
             if source.is_dir():

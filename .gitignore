@@ -12,4 +12,5 @@ __pycache__/
 ai_config.json
 ai_conversation.json
 ai_draft.json
+ai_plan_draft.json
 dist/

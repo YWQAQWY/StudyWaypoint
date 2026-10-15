@@ -93,13 +93,19 @@ class Handler(BaseHTTPRequestHandler):
         ai = self.ai
         if method == "GET":
             if path == "/api/ai/state": return ai.state()
+            if path == "/api/ai/plan-draft": return ai.plan_draft_state()
             if path == "/api/ai/draft": return ai.draft()
+            if path == "/api/ai/activity": return ai.activity()
         if method == "POST":
             if path == "/api/ai/config": return ai.save_config(self._json())
+            if path == "/api/ai/search/test": return ai.test_search(self._json().get("provider"))
+            if path == "/api/ai/cancel": return ai.cancel()
             if path == "/api/ai/chat": return ai.chat(self._json())
             if path == "/api/ai/research": return ai.research()
             if path == "/api/ai/clear": return ai.clear_history()
             if path == "/api/ai/generate": return ai.start_generation(self._json())
+            if path == "/api/ai/plan-draft/confirm":
+                return ai.confirm_import(self._json(), self.tracker)
             if path == "/api/ai/draft/apply":
                 draft_id = self._json().get("id")
                 with self.tracker._lock:
