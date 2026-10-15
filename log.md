@@ -2,6 +2,13 @@
 
 本文件记录逐次开发变更。每次新增、修改或删除项目内容时，在同一批变更中补充一条记录；写明日期、做了什么、涉及哪些文件，以及验证结果。不得记录个人计划、学习数据或 API 密钥。
 
+## 2026-10-15：Windows x64 便携增量发行包
+
+- 新增 `windows_launcher.py`：复用现有 `server.Handler`、`PlanLibrary` 和 `AIPlanner`，在 Windows 用户数据目录运行本地服务，优先以 Edge 应用窗口打开，失败时改用默认浏览器；增加同目录单实例锁与控制台编码兼容处理。
+- 新增 `packaging/build_windows.py`：以允许清单收录程序、静态页面和通用示例，下载并校验 Python 3.13.16 Windows 嵌入运行时与 tzdata 2026.5，输出可解压使用的 Windows x64 ZIP 和 SHA-256 文件；不收录私人计划、数据库或密钥。更新 `packaging/build_release.py`，使源码发行包包含 Windows 启动器、构建脚本和使用指南。
+- 修改 `plan_library.py`，使用标准文件 URI 打开只读 SQLite 数据库，以兼容 Windows 路径；新增 `tests/test_windows_release.py` 覆盖启动器数据目录、本地服务、Edge 关闭与浏览器回退、打包清单和路径安全。更新 `README.md`、`USER_GUIDE.md`、`WINDOWS_GUIDE.md`、`CURRENT_UI.txt`、`CHANGELOG.md`、`RELEASE_NOTES_1.4.0.md` 的 Windows 安装、使用与限制说明；Linux 两种打包入口也纳入 Windows 指南，保证文档链接可用。
+- 验证：针对 Windows 包与计划库的 14 项测试通过；全量单元测试 55/55 通过。实际 ZIP 含 686 个文件、官方运行时许可证和 tzdata 许可证，无私人数据匹配项。Wine 9.0 中的 Windows Python 3.13.16 可加载 SQLite、HTTPS、时区和应用模块；实际从包内启动本地服务、导入/预览通用 v3 计划并请求 `/api/bootstrap` 返回 200，同一数据目录的第二个实例被拒绝。尚未在 Windows 真机验证 Edge 图形窗口及安装体验。
+
 ## 2026-10-15
 
 ### 1.4.0：桌面工作区 UI 与 AI 规划交互升级

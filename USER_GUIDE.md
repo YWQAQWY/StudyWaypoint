@@ -2,7 +2,7 @@
 
 ## 1. 适用范围与下载
 
-本版是适用于 Ubuntu/Debian 图形桌面的独立窗口程序。发行文件包括 `studywaypoint_1.4.0_all.deb`（安装包）、`StudyWaypoint-1.4.0-source.zip`（源码及示例）、`SHA256SUMS`（校验值）。安装包仍需系统提供 Python 3.11+、GTK 3、WebKitGTK 4.1；`apt` 会处理软件包依赖。课程与学习记录保存在本机；打开课程网站、使用 AI 对话和联网检索时需要网络。没有 Windows/macOS 安装包。
+本版在 Ubuntu/Debian 提供 GTK 独立窗口，在 Windows x64 提供以 Edge 应用窗口运行的便携 ZIP。Linux 发行文件包括 `studywaypoint_1.4.0_all.deb`、`StudyWaypoint-1.4.0-source.zip` 和 `SHA256SUMS`；Windows 增量发行文件为 `StudyWaypoint-1.4.0-windows-x64.zip` 及同名 `.sha256`。Linux 安装包需系统提供 Python 3.11+、GTK 3、WebKitGTK 4.1；Windows ZIP 自带 Python，不需要另装。课程与学习记录保存在本机；打开课程网站、使用 AI 对话和联网检索时需要网络。尚无 macOS 包。
 
 在发行文件目录中执行：
 
@@ -20,6 +20,8 @@ python3 packaging/install_user.py
 此方式安装到当前用户的 `~/.local/opt/StudyWaypoint/`，并创建 `~/.local/bin/studywaypoint` 与应用菜单项。更新安装包或重复运行用户安装脚本均保留位于数据目录的学习记录。安装后从应用菜单搜索“StudyWaypoint”，或在终端运行 `studywaypoint`。无需手动启动本地服务。
 
 源码包还可以直接运行：`./run-desktop.sh`。只需浏览器时，运行 `python3 server.py`，访问 `http://127.0.0.1:8765`。浏览器版默认只监听本机。
+
+Windows 用户请完整解压 `StudyWaypoint-1.4.0-windows-x64.zip`，双击 `Start StudyWaypoint.cmd`；无需执行上面的 Linux 命令。Edge 应用窗口关闭后服务自动结束；没有 Edge 时会在默认浏览器打开，使用结束后在命令窗口按 Enter。下载、校验、升级和故障排查见 [Windows 使用指南](WINDOWS_GUIDE.md)。
 
 ### 桌面工作区
 
@@ -77,13 +79,13 @@ python3 packaging/install_user.py
 
 ## 4. 备份、恢复与数据位置
 
-“设置与备份”中的“下载当前计划备份”会导出当前计划的数据表、进度、证据、学习时长和课程快照。桌面窗口标题栏也有原生导出和恢复按钮。请对每个需要保存的计划分别导出备份。备份文件含个人笔记与证据，请妥善保存。
+“设置与备份”中的“下载当前计划备份”会导出当前计划的数据表、进度、证据、学习时长和课程快照。Linux GTK 窗口标题栏也有原生导出和恢复按钮；Windows 版请使用页面内的相同功能。请对每个需要保存的计划分别导出备份。备份文件含个人笔记与证据，请妥善保存。
 
 恢复时先预览各表的记录数变化，再确认替换当前计划的数据库。恢复前应用会自动把当前内容保存到数据目录的 `backups/`，保留最近 5 份。新备份带有 `plan_id`，只能在对应计划中恢复；早期无 `plan_id` 的备份须先导入对应课程 JSON；程序只有在备份的全部课程日快照与当前计划完全匹配时才允许恢复。恢复前要先结束计时。
 
-安装版默认数据目录是 `~/.local/share/studywaypoint/`；通用示例计划保存在其 `builtin/tracker.sqlite3`。其他计划位于 `plans/<plan_id 的 SHA-256 前 24 位>/`，各自有 `curriculum.json` 和 `tracker.sqlite3`。同一计划替换前的 JSON 保存在该目录的 `source_versions/`，最多 5 份。`plan_library.json` 记录当前激活的计划，`ui_preferences.json` 记录桌面布局和主题偏好，均不进入课程备份或发行包。设置 `TRACKER_DATA_DIR` 环境变量可指定数据目录。
+Linux 安装版默认数据目录是 `~/.local/share/studywaypoint/`；Windows 便携版默认是 `%LOCALAPPDATA%\StudyWaypoint\`。通用示例计划保存在相应目录的 `builtin/tracker.sqlite3`。其他计划位于 `plans/<plan_id 的 SHA-256 前 24 位>/`，各自有 `curriculum.json` 和 `tracker.sqlite3`。同一计划替换前的 JSON 保存在该目录的 `source_versions/`，最多 5 份。`plan_library.json` 记录当前激活的计划，`ui_preferences.json` 记录桌面布局和主题偏好，均不进入课程备份或发行包。设置 `TRACKER_DATA_DIR` 环境变量可指定数据目录。
 
-直接运行浏览器版默认使用源码目录的 `data/`；桌面版使用上述用户数据目录。升级当前用户安装的旧桌面版时，安装脚本会复制旧数据目录到 `~/.local/share/studywaypoint/`，保留旧目录作为备份；`packaging/install_user.py` 会将旧安装附带的私人课程与旧数据库复制到独立的计划目录，并继续显示该计划。通过旧 `.deb` 安装的用户请在升级前保存自己的课程 JSON 和备份；新版安装后先导入原课程，再恢复相应备份。公开发行包不含私人课程。
+直接运行浏览器版默认使用源码目录的 `data/`；桌面版使用上述各平台的用户数据目录。升级当前用户安装的旧 Linux 桌面版时，安装脚本会复制旧数据目录到 `~/.local/share/studywaypoint/`，保留旧目录作为备份；`packaging/install_user.py` 会将旧安装附带的私人课程与旧数据库复制到独立的计划目录，并继续显示该计划。通过旧 `.deb` 安装的用户请在升级前保存自己的课程 JSON 和备份；新版安装后先导入原课程，再恢复相应备份。公开发行包不含私人课程。
 
 ## 5. 常见问题
 
@@ -92,7 +94,7 @@ python3 packaging/install_user.py
 - **无法切换计划：**先结束当前计时。
 - **备份属于另一计划：**先切换到备份中 `plan_id` 对应的计划，再恢复。
 - **外部资源打不开：**课程链接需要联网，且第三方页面可能改版。离线时仍可使用本地课程与进度。
-- **窗口无法启动：**确认在 Linux 图形会话内，并检查 `python3-gi`、`gir1.2-gtk-3.0`、`gir1.2-webkit2-4.1` 是否安装。浏览器版只需 Python 3.11+。
+- **窗口无法启动：**Linux 请确认在图形会话内，并检查 `python3-gi`、`gir1.2-gtk-3.0`、`gir1.2-webkit2-4.1`。Windows 请确认 ZIP 已完整解压，查看 `.cmd` 命令窗口输出；可复制其中的本地地址到浏览器。浏览器版只需 Python 3.11+。
 - **升级后进度不见了：**检查是否切换到了另一计划，或当前版本使用的数据目录与旧版不同。可用旧版备份恢复，或设置 `TRACKER_DATA_DIR` 指向旧目录。
 
 ## 6. 开发者验证
@@ -102,6 +104,7 @@ python3 packaging/install_user.py
 ```bash
 python3 -m unittest discover -s tests -v
 python3 packaging/build_deb.py
+python3 packaging/build_windows.py
 ```
 
 程序只在 `127.0.0.1` 启动本地 HTTP 服务。源码和发行包不包含用户数据库。

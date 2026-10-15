@@ -98,7 +98,7 @@ class PlanLibrary:
         db_path = self._folder(plan_id) / "tracker.sqlite3"
         if not db_path.exists():
             return {}
-        with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+        with sqlite3.connect(f"{db_path.resolve().as_uri()}?mode=ro", uri=True) as db:
             columns = {row[1] for row in db.execute("PRAGMA table_info(curriculum_day)")}
             if not columns:
                 return {}

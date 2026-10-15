@@ -1,6 +1,6 @@
 # StudyWaypoint
 
-StudyWaypoint 是适用于 Ubuntu/Debian 图形桌面的学习计划与进度追踪器。它把课程安排成日历和每日任务，记录学习计时、阅读与练习步骤、证据、验收结果及复盘。你可以导入符合 v3 格式的 JSON 计划，多个计划的进度分别保存在本机；也可以配置自己的 API，在应用中与 AI 讨论并生成计划草稿。
+StudyWaypoint 是适用于 Ubuntu/Debian 与 Windows x64 的学习计划与进度追踪器。它把课程安排成日历和每日任务，记录学习计时、阅读与练习步骤、证据、验收结果及复盘。你可以导入符合 v3 格式的 JSON 计划，多个计划的进度分别保存在本机；也可以配置自己的 API，在应用中与 AI 讨论并生成计划草稿。
 
 公开发行版只内置**通用一周示例计划**，不包含开发者或任何用户的私人课程、学习记录和数据库。应用不会替你完成实验，也不会执行证据中填写的代码或文件路径。
 
@@ -18,8 +18,8 @@ StudyWaypoint 是适用于 Ubuntu/Debian 图形桌面的学习计划与进度追
 
 ### 系统要求
 
-- Ubuntu/Debian 图形桌面；发行包目前没有 Windows 或 macOS 安装程序。
-- Python 3.11 或更新版本、GTK 3、WebKitGTK 4.1。安装 `.deb` 时，`apt` 会处理系统软件包依赖。
+- Ubuntu/Debian 图形桌面：Python 3.11 或更新版本、GTK 3、WebKitGTK 4.1；安装 `.deb` 时，`apt` 会处理系统软件包依赖。
+- Windows 10/11 x64：使用独立的便携 ZIP，内含 Python 运行时；以 Edge 应用窗口或默认浏览器显示界面，不需要 GTK。尚无 Windows 安装程序或 macOS 发行包。
 - 学习记录保存在本机；打开课程中的外部网页需要网络。
 
 ### 安装发行版
@@ -31,6 +31,12 @@ sudo apt install ./studywaypoint_1.4.0_all.deb
 ```
 
 安装后从应用菜单搜索 **StudyWaypoint**，或在终端运行 `studywaypoint`。如果同时下载了 `SHA256SUMS`，可先在发行文件目录执行 `sha256sum -c SHA256SUMS` 核对下载文件。
+
+### Windows x64 便携包
+
+下载 `StudyWaypoint-1.4.0-windows-x64.zip`，完整解压，双击其中的 `Start StudyWaypoint.cmd`。程序会启动本地服务并打开 Edge 应用窗口；没有 Edge 时改用默认浏览器。学习数据保存在 `%LOCALAPPDATA%\StudyWaypoint\`，与解压目录分离。包内只含通用示例计划，不含私人数据或 API Key。完整的启动、升级、备份和故障处理说明见 [Windows 使用指南](WINDOWS_GUIDE.md)。
+
+发布者可用 `python3 packaging/build_windows.py` 生成 Windows ZIP 及其 `.sha256` 校验文件；构建时从 Python.org 和 PyPI 下载固定版本、校验 SHA-256 后打包，不需要在 Linux 构建机安装 Windows Python。Windows 真机启动与 Edge 窗口交互仍需在 Windows 上验收。
 
 ### 从源码运行或安装到当前用户
 

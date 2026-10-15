@@ -6,4 +6,4 @@ AI 规划继续使用同一聊天、搜索 Agent 和结构化 PlanDraft。聊天
 
 用户明确确认后仍由原有 v3 校验和导入模块处理。公开发行包只含通用示例，不含个人课程、数据库、对话或密钥。SearXNG 需用户自备实例，Brave 需主动启用。真实模型与外部搜索连接请在自己的配置下测试。
 
-发行文件：`studywaypoint_1.4.0_all.deb`、`StudyWaypoint-1.4.0-source.zip`、`SHA256SUMS`。使用方法见 [使用指南](USER_GUIDE.md)。
+发行文件：`studywaypoint_1.4.0_all.deb`、`StudyWaypoint-1.4.0-source.zip`、`SHA256SUMS`，另增 `StudyWaypoint-1.4.0-windows-x64.zip` 及其 `.sha256`。Windows ZIP 自带 Python 运行时，以 Edge 应用窗口或默认浏览器运行；使用方法见 [Windows 使用指南](WINDOWS_GUIDE.md) 与 [完整使用指南](USER_GUIDE.md)。

@@ -16,7 +16,7 @@ def build(destination: Path | None = None) -> Path:
     with tempfile.TemporaryDirectory(prefix="studywaypoint-deb-") as temp:
         staging = Path(temp) / "package"
         app = staging / "usr" / "share" / "studywaypoint"
-        for relative in ["desktop.py", "server.py", "tracker.py", "plan_library.py", "ai_planner.py", "learning_resources.py", "plan_draft.py", "static", "examples", "assets", "README.md", "USER_GUIDE.md", "CURRENT_UI.txt", "CHANGELOG.md", "log.md", "RELEASE_NOTES_1.4.0.md", "docs/release_1.4.0.md"]:
+        for relative in ["desktop.py", "server.py", "tracker.py", "plan_library.py", "ai_planner.py", "learning_resources.py", "plan_draft.py", "static", "examples", "assets", "README.md", "USER_GUIDE.md", "WINDOWS_GUIDE.md", "CURRENT_UI.txt", "CHANGELOG.md", "log.md", "RELEASE_NOTES_1.4.0.md", "docs/release_1.4.0.md"]:
             source = ROOT / relative
             target = app / relative
             target.parent.mkdir(parents=True, exist_ok=True)
