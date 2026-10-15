@@ -14,31 +14,53 @@ StudyWaypoint 是适用于 Ubuntu/Debian 与 Windows x64 的学习计划与进�
 - **桌面工作区**：可折叠左侧导航、浅色/深色/跟随系统主题、可拖动 AI 双栏、键盘操作和减少动态效果支持。
 - **AI 规划**：使用 OpenAI 兼容的 Chat Completions API 讨论学习目标；默认通过自备 SearXNG 联网检索，主动启用时优先使用 Brave。对话中的结构化草稿在侧栏持续更新，确认后自动生成、校验并导入 v3 计划。
 
+## 选择发行版本
+
+在 [GitHub Releases](https://github.com/YWQAQWY/StudyWaypoint/releases) 中按系统选择对应文件：
+
+| 系统 | 下载文件 | 运行方式 |
+| --- | --- | --- |
+| Windows 10/11 x64 | `StudyWaypoint-1.4.0-windows-x64.zip` 和同名 `.zip.sha256` | 完整解压后双击 `Start StudyWaypoint.cmd`；这是便携包，不是安装程序。 |
+| Ubuntu/Debian 图形桌面 | `studywaypoint_1.4.0_all.deb` 和 `SHA256SUMS` | 通过 `apt` 安装，从应用菜单或终端启动。 |
+| 源码使用者 | `StudyWaypoint-1.4.0-source.zip` | 按下文从源码启动；它不是 Windows 可执行包。 |
+
+GitHub 自动附带的 **Source code (zip/tar.gz)** 也是源码快照；一般用户应下载上表中的 Windows ZIP 或 Linux `.deb`。目前没有 macOS 发行包。
+
 ## 安装与启动
 
 ### 系统要求
 
 - Ubuntu/Debian 图形桌面：Python 3.11 或更新版本、GTK 3、WebKitGTK 4.1；安装 `.deb` 时，`apt` 会处理系统软件包依赖。
-- Windows 10/11 x64：使用独立的便携 ZIP，内含 Python 运行时；以 Edge 应用窗口或默认浏览器显示界面，不需要 GTK。尚无 Windows 安装程序或 macOS 发行包。
+- Windows 10/11 x64：便携 ZIP 内含 Python 运行时；以 Edge 应用窗口或默认浏览器显示界面，不需要 GTK。
 - 学习记录保存在本机；打开课程中的外部网页需要网络。
 
-### 安装发行版
+### Ubuntu/Debian 安装版
 
-下载 `studywaypoint_1.4.0_all.deb`，在该文件所在目录运行：
+从 Linux Release 下载 `studywaypoint_1.4.0_all.deb` 和 `SHA256SUMS`，在下载目录运行：
 
 ```bash
+sha256sum -c --ignore-missing SHA256SUMS
 sudo apt install ./studywaypoint_1.4.0_all.deb
 ```
 
-安装后从应用菜单搜索 **StudyWaypoint**，或在终端运行 `studywaypoint`。如果同时下载了 `SHA256SUMS`，可先在发行文件目录执行 `sha256sum -c SHA256SUMS` 核对下载文件。
+`SHA256SUMS` 也列出单独的源码 ZIP；只下载 `.deb` 时使用 `--ignore-missing`，若同时下载了 `.deb` 和源码 ZIP，则可运行 `sha256sum -c SHA256SUMS`。安装后从应用菜单搜索 **StudyWaypoint**，或在终端运行 `studywaypoint`。更新时先关闭应用，再以同样方式安装新版 `.deb`；默认用户数据仍保存在 `~/.local/share/studywaypoint/`。
 
 ### Windows x64 便携包
 
-下载 `StudyWaypoint-1.4.0-windows-x64.zip`，完整解压，双击其中的 `Start StudyWaypoint.cmd`。程序会启动本地服务并打开 Edge 应用窗口；没有 Edge 时改用默认浏览器。学习数据保存在 `%LOCALAPPDATA%\StudyWaypoint\`，与解压目录分离。包内只含通用示例计划，不含私人数据或 API Key。完整的启动、升级、备份和故障处理说明见 [Windows 使用指南](WINDOWS_GUIDE.md)。
+1. 从 Windows Release 下载 `StudyWaypoint-1.4.0-windows-x64.zip` 和 `StudyWaypoint-1.4.0-windows-x64.zip.sha256`。可在 PowerShell 中运行以下命令，比较两处 SHA-256 值是否相同：
 
-发布者可用 `python3 packaging/build_windows.py` 生成 Windows ZIP 及其 `.sha256` 校验文件；构建时从 Python.org 和 PyPI 下载固定版本、校验 SHA-256 后打包，不需要在 Linux 构建机安装 Windows Python。Windows 真机启动与 Edge 窗口交互仍需在 Windows 上验收。
+   ```powershell
+   Get-FileHash .\StudyWaypoint-1.4.0-windows-x64.zip -Algorithm SHA256
+   Get-Content .\StudyWaypoint-1.4.0-windows-x64.zip.sha256
+   ```
 
-### 从源码运行或安装到当前用户
+2. 将 ZIP **完整解压**到自己有写权限的文件夹，双击其中的 `Start StudyWaypoint.cmd`；不要在压缩包预览窗口里直接运行。无需另装 Python、GTK 或 WebKitGTK，也不需要管理员权限。
+3. 程序启动本机服务并优先打开 Edge 应用窗口；未找到 Edge 时改用默认浏览器。使用 Edge 时关闭应用窗口即可结束服务；使用其他浏览器时，在命令窗口按 Enter 结束。使用期间请保持命令窗口打开。
+4. 计划、进度和 AI 配置保存在 `%LOCALAPPDATA%\StudyWaypoint\`，与解压目录分离。更新时先关闭旧版，再完整解压新版并从新目录启动；升级前建议逐个导出计划备份。
+
+若窗口没有自动打开，请访问命令窗口显示的 `http://127.0.0.1:端口/`；若启动失败，可在解压目录打开 PowerShell，运行 `& '.\Start StudyWaypoint.cmd'` 查看报错。完整的升级、备份和故障处理说明见 [Windows 使用指南](WINDOWS_GUIDE.md)。
+
+### 从源码运行或安装到当前用户（Linux）
 
 解压源码包，进入含 `README.md` 的项目目录：
 
@@ -57,7 +79,7 @@ python3 packaging/install_user.py
 
 ### 桌面界面与快捷操作
 
-左侧菜单可收起为仅图标模式，状态会在重启后恢复。顶部的主题按钮可快速切换明暗模式；“设置与备份”中的“外观”还可选择跟随系统。AI 规划页可拖动聊天区与计划区之间的分隔线，也可用分隔线上的左右方向键调整宽度；右侧确认按钮始终位于计划栏底部。聊天输入按 `Ctrl+Enter`（macOS 键盘为 `⌘+Enter`）发送。界面遵守系统的“减少动态效果”偏好。布局偏好保存在本机数据目录的 `ui_preferences.json`，即使桌面服务重启后端口改变也可恢复；它不包含课程、对话或密钥。完整布局见 [当前 UI 文本说明](CURRENT_UI.txt)。
+左侧菜单可收起为仅图标模式，状态会在重启后恢复。顶部的主题按钮可快速切换明暗模式；“设置与备份”中的“外观”还可选择跟随系统。AI 规划页可拖动聊天区与计划区之间的分隔线，也可用分隔线上的左右方向键调整宽度；右侧确认按钮始终位于计划栏底部。聊天输入按 `Ctrl+Enter` 发送。界面遵守系统的“减少动态效果”偏好。布局偏好保存在本机数据目录的 `ui_preferences.json`，即使桌面服务重启后端口改变也可恢复；它不包含课程、对话或密钥。Linux GTK 窗口另有原生导入、导出和恢复按钮；Windows 用户使用页面“设置与备份”中的对应操作。完整布局见 [当前 UI 文本说明](CURRENT_UI.txt)。
 
 ## 第一次使用
 
@@ -100,13 +122,13 @@ python3 packaging/install_user.py
 2. 用 `curl 'http://127.0.0.1:8888/search?q=python&format=json'` 确认返回含 `results` 的 JSON。端口按你的实例实际端口修改；若返回 403，检查 JSON 格式是否已启用。许多公共实例禁用 JSON 接口，优先使用自己的实例。[SearXNG 搜索接口](https://docs.searxng.org/dev/search_api.html)
 3. 在应用“设置与备份”中填写实例根地址，例如 `http://127.0.0.1:8888`，保存后点“测试 SearXNG”。本机地址可使用 HTTP，远程地址必须是 HTTPS。默认模式不需要 Brave Key，但实例必须自行部署并持续运行。发行包不自带 SearXNG，也不会硬编码公共实例；未配置或不可达时会显示失败原因，普通模型对话仍可使用。
 
-模型服务商以及你选择的检索服务可能消耗各自的 API 配额或资源。对话内容会发送给模型服务商，搜索词会发送给实际使用的检索来源；SearXNG 还会请求其上游搜索源。密钥、对话、检索证据、内部规划草稿与最终 JSON 草稿保存在本机数据目录的独立文件中，权限为仅当前用户可读写；它们不会包含在学习备份或公开发行包内。可在界面中单独删除密钥、清空对话。`search_result_only` 只说明搜索提供者返回过该链接；`content_verified` 表示应用成功读取了网页正文，不代表课程质量已人工认证。确认前请核对课程、视频章节与网址。现有 v3 格式要求**每周至少两条 LeetCode 题目链接**以及每天至少一条阅读资源；没有可追溯链接时生成会明确失败，不会编造。应用不会替你完成课程实验。
+模型服务商以及你选择的检索服务可能消耗各自的 API 配额或资源。对话内容会发送给模型服务商，搜索词会发送给实际使用的检索来源；SearXNG 还会请求其上游搜索源。密钥、对话、检索证据、内部规划草稿与最终 JSON 草稿保存在本机用户数据目录的独立文件中，具体访问权限受系统账户与目录权限控制；它们不会包含在学习备份或公开发行包内。可在界面中单独删除密钥、清空对话。`search_result_only` 只说明搜索提供者返回过该链接；`content_verified` 表示应用成功读取了网页正文，不代表课程质量已人工认证。确认前请核对课程、视频章节与网址。现有 v3 格式要求**每周至少两条 LeetCode 题目链接**以及每天至少一条阅读资源；没有可追溯链接时生成会明确失败，不会编造。应用不会替你完成课程实验。
 
 模型接口参考：[DeepSeek 的 OpenAI 兼容 Chat Completions 示例](https://api-docs.deepseek.com/api/create-chat-completion/)。DeepSeek API 的内置 `web_search` 工具目前会被忽略，因此使用它时仍需配置一个外部检索来源。[DeepSeek 官方说明](https://api-docs.deepseek.com/zh-cn/guides/responses_api/)
 
 ## 导入自己的计划
 
-1. 在“设置与备份”→“计划库”选择本机的 **UTF-8 `.json` 文件**。桌面窗口标题栏的“导入 v3 JSON 计划”按钮也可使用。
+1. 在“设置与备份”→“计划库”选择本机的 **UTF-8 `.json` 文件**。Linux GTK 窗口标题栏的“导入 v3 JSON 计划”按钮也可使用。
 2. 阅读导入预览：应用会校验格式，并显示计划名称、周数、天数、总小时数，以及新增、变更、未变、移除的学习日。
 3. 确认后导入并切换到该计划。格式错误会显示校验信息，不会导入。正在计时时，请先结束计时，再导入或切换计划。
 4. 在计划库中可以随时切回其他已导入计划。不同 `plan_id` 的数据库彼此独立。
@@ -167,7 +189,8 @@ JSON 根节点必须是对象。以下字段构成可导入计划的主要结构
 
 | 运行方式 | 默认数据位置 |
 | --- | --- |
-| 已安装的桌面版 | `~/.local/share/studywaypoint/` |
+| Windows x64 便携版 | `%LOCALAPPDATA%\StudyWaypoint\` |
+| Ubuntu/Debian 桌面版 | `~/.local/share/studywaypoint/` |
 | 直接运行源码的浏览器版 | 项目目录下的 `data/` |
 
 桌面版数据目录可用 `TRACKER_DATA_DIR` 环境变量指定。目录中的 `plan_library.json` 记录计划库与当前计划；内置示例存于 `builtin/`，导入的计划分别存于 `plans/<plan_id 的 SHA-256 前 24 位>/`，其中包含 `curriculum.json` 和 `tracker.sqlite3`。重新导入前的课程 JSON 会保存在对应计划的 `source_versions/`，最多保留 5 份。
@@ -178,7 +201,8 @@ JSON 根节点必须是对象。以下字段构成可导入计划的主要结构
 - **“今天”没有任务**：检查学习起始日期、时区和当前选择的计划；也可从“课程日历”查看其他日期。
 - **不能切换或导入计划**：先结束当前计时。
 - **恢复提示计划不匹配**：切换到相应 `plan_id` 的计划；旧备份需先导入对应课程。
-- **桌面窗口无法启动**：确认处于 Linux 图形会话，且安装了 `python3-gi`、`gir1.2-gtk-3.0`、`gir1.2-webkit2-4.1`。仅浏览器模式只需 Python 3.11+。
+- **Windows 无法启动或窗口未出现**：确保完整解压，并查看 `Start StudyWaypoint.cmd` 命令窗口；必要时把其中的本地地址复制到浏览器。详见 [Windows 故障处理](WINDOWS_GUIDE.md)。
+- **Linux 桌面窗口无法启动**：确认处于图形会话，且安装了 `python3-gi`、`gir1.2-gtk-3.0`、`gir1.2-webkit2-4.1`。仅浏览器模式只需 Python 3.11+。
 - **升级后看不到进度**：先检查是否选中了原计划，以及 `TRACKER_DATA_DIR` 是否指向原数据目录，再考虑从对应计划的备份恢复。
 
 更多升级说明见 [完整使用指南](USER_GUIDE.md)。
@@ -197,10 +221,11 @@ JSON 根节点必须是对象。以下字段构成可导入计划的主要结构
 python3 -m unittest discover -s tests -v
 ```
 
-需要生成 Debian 安装包时运行：
+需要重新生成发行文件时运行：
 
 ```bash
-python3 packaging/build_deb.py
+python3 packaging/build_release.py
+python3 packaging/build_windows.py
 ```
 
-打包脚本生成可发布的 `.deb`；发布前请按 [发行说明](docs/release_1.4.0.md) 检查文件清单，确认没有加入个人课程 JSON、数据库、备份、布局偏好或 API 密钥。
+前者生成 `.deb`、源码 ZIP 和 `SHA256SUMS`；后者生成 Windows ZIP 及其 `.sha256`，构建时需联网下载并校验固定版本的 Python Windows 运行时和时区数据。发布前请按 [发行说明](docs/release_1.4.0.md) 检查文件清单，确认没有加入个人课程 JSON、数据库、备份、布局偏好或 API 密钥。Windows 图形窗口还需在 Windows 真机上验收。

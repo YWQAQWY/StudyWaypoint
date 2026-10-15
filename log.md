@@ -2,6 +2,16 @@
 
 本文件记录逐次开发变更。每次新增、修改或删除项目内容时，在同一批变更中补充一条记录；写明日期、做了什么、涉及哪些文件，以及验证结果。不得记录个人计划、学习数据或 API 密钥。
 
+## 2026-10-15：按 Windows 与 Linux 发行文件更新 README
+
+- 修改 `README.md`：加入按系统选择发行附件的表格，分别说明 Windows x64 ZIP 和 Ubuntu/Debian `.deb` 的校验、安装、启动、升级、数据目录与故障排查；澄清 GitHub 自动源码快照、手工导入计划、AI 配置及两平台界面差异。保留既有 v3 计划格式与应用使用说明。
+- 验证：检查 README 中的本地文档链接与发行文件名、执行 `git diff --check`，并重新生成 Windows ZIP、Linux `.deb`、源码 ZIP 及对应 SHA-256 文件；本次未改动程序逻辑。
+
+## 2026-10-15：整理 Git 忽略规则
+
+- 修改 `.gitignore`：补充本地计划、数据库及附属文件、AI 凭据和对话、Windows 实例锁、Python/测试缓存、虚拟环境、编辑器文件、发行产物和临时日志的忽略规则；保留仓库中的公开示例计划、源码、文档与开发日志。
+- 验证：使用 `git check-ignore` 检查敏感与构建路径被排除，`examples/sample_plan_v3.json`、`README.md`、`log.md`、`packaging/build_windows.py` 未被新规则排除；`git diff --check` 通过。
+
 ## 2026-10-15：Windows x64 便携增量发行包
 
 - 新增 `windows_launcher.py`：复用现有 `server.Handler`、`PlanLibrary` 和 `AIPlanner`，在 Windows 用户数据目录运行本地服务，优先以 Edge 应用窗口打开，失败时改用默认浏览器；增加同目录单实例锁与控制台编码兼容处理。
