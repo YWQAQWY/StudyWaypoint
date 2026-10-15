@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=StudyWaypoint
+Name[zh_CN]=StudyWaypoint 学习计划追踪器
+Comment=Local-first study plan and progress tracker
+Comment[zh_CN]=可导入学习计划的本地追踪器
+Exec=studywaypoint
+Icon=studywaypoint
+Terminal=false
+Categories=Education;
+StartupNotify=true

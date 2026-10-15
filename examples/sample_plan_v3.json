@@ -1,0 +1,371 @@
+{
+  "schema_version": "3.0",
+  "plan_id": "starter-one-week-v3",
+  "plan_name": "通用一周示例计划",
+  "curriculum_version": "1.0.0",
+  "weeks": 1,
+  "days_per_week": 7,
+  "daily_hours": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "total_planned_hours": 7,
+  "weekly_themes": [
+    "通用学习实践"
+  ],
+  "leetcode_weekly": {
+    "1": [
+      {
+        "title": "Two Sum",
+        "url": "https://leetcode.com/problems/two-sum/"
+      },
+      {
+        "title": "Valid Parentheses",
+        "url": "https://leetcode.com/problems/valid-parentheses/"
+      }
+    ]
+  },
+  "days": [
+    {
+      "id": "W01D01",
+      "week": 1,
+      "day": 1,
+      "title": "设定目标与环境",
+      "week_theme": "通用学习实践",
+      "planned_minutes": 60,
+      "time_budget": {
+        "theory_minutes": 20,
+        "practice_minutes": 30,
+        "verification_minutes": 10
+      },
+      "track": "通用",
+      "course_section": "第 1 天：设定目标与环境",
+      "course_readings": [
+        {
+          "title": "Python 官方文档",
+          "url": "https://docs.python.org/3/tutorial/",
+          "type": "official_documentation",
+          "mandatory": true,
+          "estimated_minutes": 20
+        }
+      ],
+      "coding_exercises": [
+        {
+          "id": "W01D01E1",
+          "title": "设定目标与环境",
+          "instructions": "亲自完成当天的小练习，记录实现步骤和遇到的问题。",
+          "expected_artifacts": [
+            "学习笔记或练习文件"
+          ],
+          "verification": "检查产物并记录运行结果。",
+          "requires_manual_implementation": true
+        }
+      ],
+      "deliverables": [
+        "学习笔记或练习文件"
+      ],
+      "acceptance_tests": [
+        {
+          "id": "W01D01A1",
+          "assertion": "可展示当天练习产物和结果",
+          "evidence_required": true,
+          "pass_rule": "提交实际产物路径、测试日志或说明，人工确认。"
+        }
+      ],
+      "leetcode": []
+    },
+    {
+      "id": "W01D02",
+      "week": 1,
+      "day": 2,
+      "title": "查阅文档并做笔记",
+      "week_theme": "通用学习实践",
+      "planned_minutes": 60,
+      "time_budget": {
+        "theory_minutes": 20,
+        "practice_minutes": 30,
+        "verification_minutes": 10
+      },
+      "track": "通用",
+      "course_section": "第 2 天：查阅文档并做笔记",
+      "course_readings": [
+        {
+          "title": "Python 官方文档",
+          "url": "https://docs.python.org/3/library/",
+          "type": "official_documentation",
+          "mandatory": true,
+          "estimated_minutes": 20
+        }
+      ],
+      "coding_exercises": [
+        {
+          "id": "W01D02E1",
+          "title": "查阅文档并做笔记",
+          "instructions": "亲自完成当天的小练习，记录实现步骤和遇到的问题。",
+          "expected_artifacts": [
+            "学习笔记或练习文件"
+          ],
+          "verification": "检查产物并记录运行结果。",
+          "requires_manual_implementation": true
+        }
+      ],
+      "deliverables": [
+        "学习笔记或练习文件"
+      ],
+      "acceptance_tests": [
+        {
+          "id": "W01D02A1",
+          "assertion": "可展示当天练习产物和结果",
+          "evidence_required": true,
+          "pass_rule": "提交实际产物路径、测试日志或说明，人工确认。"
+        }
+      ],
+      "leetcode": []
+    },
+    {
+      "id": "W01D03",
+      "week": 1,
+      "day": 3,
+      "title": "实践第一个小任务",
+      "week_theme": "通用学习实践",
+      "planned_minutes": 60,
+      "time_budget": {
+        "theory_minutes": 20,
+        "practice_minutes": 30,
+        "verification_minutes": 10
+      },
+      "track": "通用",
+      "course_section": "第 3 天：实践第一个小任务",
+      "course_readings": [
+        {
+          "title": "Python 官方文档",
+          "url": "https://docs.python.org/3/tutorial/controlflow.html",
+          "type": "official_documentation",
+          "mandatory": true,
+          "estimated_minutes": 20
+        }
+      ],
+      "coding_exercises": [
+        {
+          "id": "W01D03E1",
+          "title": "实践第一个小任务",
+          "instructions": "亲自完成当天的小练习，记录实现步骤和遇到的问题。",
+          "expected_artifacts": [
+            "学习笔记或练习文件"
+          ],
+          "verification": "检查产物并记录运行结果。",
+          "requires_manual_implementation": true
+        }
+      ],
+      "deliverables": [
+        "学习笔记或练习文件"
+      ],
+      "acceptance_tests": [
+        {
+          "id": "W01D03A1",
+          "assertion": "可展示当天练习产物和结果",
+          "evidence_required": true,
+          "pass_rule": "提交实际产物路径、测试日志或说明，人工确认。"
+        }
+      ],
+      "leetcode": []
+    },
+    {
+      "id": "W01D04",
+      "week": 1,
+      "day": 4,
+      "title": "继续实践并检查结果",
+      "week_theme": "通用学习实践",
+      "planned_minutes": 60,
+      "time_budget": {
+        "theory_minutes": 20,
+        "practice_minutes": 30,
+        "verification_minutes": 10
+      },
+      "track": "通用",
+      "course_section": "第 4 天：继续实践并检查结果",
+      "course_readings": [
+        {
+          "title": "Python 官方文档",
+          "url": "https://docs.python.org/3/tutorial/datastructures.html",
+          "type": "official_documentation",
+          "mandatory": true,
+          "estimated_minutes": 20
+        }
+      ],
+      "coding_exercises": [
+        {
+          "id": "W01D04E1",
+          "title": "继续实践并检查结果",
+          "instructions": "亲自完成当天的小练习，记录实现步骤和遇到的问题。",
+          "expected_artifacts": [
+            "学习笔记或练习文件"
+          ],
+          "verification": "检查产物并记录运行结果。",
+          "requires_manual_implementation": true
+        }
+      ],
+      "deliverables": [
+        "学习笔记或练习文件"
+      ],
+      "acceptance_tests": [
+        {
+          "id": "W01D04A1",
+          "assertion": "可展示当天练习产物和结果",
+          "evidence_required": true,
+          "pass_rule": "提交实际产物路径、测试日志或说明，人工确认。"
+        }
+      ],
+      "leetcode": []
+    },
+    {
+      "id": "W01D05",
+      "week": 1,
+      "day": 5,
+      "title": "复盘与修正",
+      "week_theme": "通用学习实践",
+      "planned_minutes": 60,
+      "time_budget": {
+        "theory_minutes": 20,
+        "practice_minutes": 30,
+        "verification_minutes": 10
+      },
+      "track": "通用",
+      "course_section": "第 5 天：复盘与修正",
+      "course_readings": [
+        {
+          "title": "Python 官方文档",
+          "url": "https://docs.python.org/3/library/unittest.html",
+          "type": "official_documentation",
+          "mandatory": true,
+          "estimated_minutes": 20
+        }
+      ],
+      "coding_exercises": [
+        {
+          "id": "W01D05E1",
+          "title": "复盘与修正",
+          "instructions": "亲自完成当天的小练习，记录实现步骤和遇到的问题。",
+          "expected_artifacts": [
+            "学习笔记或练习文件"
+          ],
+          "verification": "检查产物并记录运行结果。",
+          "requires_manual_implementation": true
+        }
+      ],
+      "deliverables": [
+        "学习笔记或练习文件"
+      ],
+      "acceptance_tests": [
+        {
+          "id": "W01D05A1",
+          "assertion": "可展示当天练习产物和结果",
+          "evidence_required": true,
+          "pass_rule": "提交实际产物路径、测试日志或说明，人工确认。"
+        }
+      ],
+      "leetcode": []
+    },
+    {
+      "id": "W01D06",
+      "week": 1,
+      "day": 6,
+      "title": "完成一周项目",
+      "week_theme": "通用学习实践",
+      "planned_minutes": 60,
+      "time_budget": {
+        "theory_minutes": 20,
+        "practice_minutes": 30,
+        "verification_minutes": 10
+      },
+      "track": "通用",
+      "course_section": "第 6 天：完成一周项目",
+      "course_readings": [
+        {
+          "title": "Python 官方文档",
+          "url": "https://docs.python.org/3/tutorial/modules.html",
+          "type": "official_documentation",
+          "mandatory": true,
+          "estimated_minutes": 20
+        }
+      ],
+      "coding_exercises": [
+        {
+          "id": "W01D06E1",
+          "title": "完成一周项目",
+          "instructions": "亲自完成当天的小练习，记录实现步骤和遇到的问题。",
+          "expected_artifacts": [
+            "学习笔记或练习文件"
+          ],
+          "verification": "检查产物并记录运行结果。",
+          "requires_manual_implementation": true
+        }
+      ],
+      "deliverables": [
+        "学习笔记或练习文件"
+      ],
+      "acceptance_tests": [
+        {
+          "id": "W01D06A1",
+          "assertion": "可展示当天练习产物和结果",
+          "evidence_required": true,
+          "pass_rule": "提交实际产物路径、测试日志或说明，人工确认。"
+        }
+      ],
+      "leetcode": []
+    },
+    {
+      "id": "W01D07",
+      "week": 1,
+      "day": 7,
+      "title": "验收与下周计划",
+      "week_theme": "通用学习实践",
+      "planned_minutes": 60,
+      "time_budget": {
+        "theory_minutes": 20,
+        "practice_minutes": 30,
+        "verification_minutes": 10
+      },
+      "track": "通用",
+      "course_section": "第 7 天：验收与下周计划",
+      "course_readings": [
+        {
+          "title": "Python 官方文档",
+          "url": "https://docs.python.org/3/library/venv.html",
+          "type": "official_documentation",
+          "mandatory": true,
+          "estimated_minutes": 20
+        }
+      ],
+      "coding_exercises": [
+        {
+          "id": "W01D07E1",
+          "title": "验收与下周计划",
+          "instructions": "亲自完成当天的小练习，记录实现步骤和遇到的问题。",
+          "expected_artifacts": [
+            "学习笔记或练习文件"
+          ],
+          "verification": "检查产物并记录运行结果。",
+          "requires_manual_implementation": true
+        }
+      ],
+      "deliverables": [
+        "学习笔记或练习文件"
+      ],
+      "acceptance_tests": [
+        {
+          "id": "W01D07A1",
+          "assertion": "可展示当天练习产物和结果",
+          "evidence_required": true,
+          "pass_rule": "提交实际产物路径、测试日志或说明，人工确认。"
+        }
+      ],
+      "leetcode": []
+    }
+  ]
+}
